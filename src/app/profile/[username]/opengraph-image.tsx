@@ -47,18 +47,22 @@ export default async function Image({ params }: { params: Promise<{ username: st
               display: "flex",
             }}
           />
-          <span style={{ color: "#282624", fontWeight: 700 }}>
-            OutBid<span style={{ color: "#e5674f" }}>Insta</span>
-          </span>
+          <div style={{ display: "flex", color: "#282624", fontWeight: 700 }}>
+            <span>OutBid</span>
+            <span style={{ color: "#e5674f" }}>Insta</span>
+          </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ fontSize: 40, color: "#67625d" }}>
-            {rank} on {SITE_NAME} · {category}
+          <div style={{ display: "flex", fontSize: 40, color: "#67625d" }}>
+            {`${rank} on ${SITE_NAME} · ${category}`}
           </div>
-          <div style={{ fontSize: 96, fontWeight: 800, color: "#282624" }}>@{handle}</div>
-          <div style={{ fontSize: 44, color: "#67625d" }}>
-            Lifetime <span style={{ color: "#282624", fontWeight: 700 }}>{current}</span>
+          <div style={{ display: "flex", fontSize: 96, fontWeight: 800, color: "#282624" }}>
+            {`@${handle}`}
+          </div>
+          <div style={{ display: "flex", gap: 12, fontSize: 44, color: "#67625d" }}>
+            <span>Lifetime</span>
+            <span style={{ color: "#282624", fontWeight: 700 }}>{current}</span>
           </div>
         </div>
 

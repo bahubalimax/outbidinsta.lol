@@ -24,9 +24,10 @@ export default function Image() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 34, color: "#67625d" }}>
           <div style={{ width: 48, height: 48, borderRadius: 14, background: "#e5674f", display: "flex" }} />
-          <span style={{ color: "#282624", fontWeight: 700 }}>
-            OutBid<span style={{ color: "#e5674f" }}>Insta</span>
-          </span>
+          <div style={{ display: "flex", color: "#282624", fontWeight: 700 }}>
+            <span>OutBid</span>
+            <span style={{ color: "#e5674f" }}>Insta</span>
+          </div>
         </div>
         <div style={{ fontSize: 88, fontWeight: 800, color: "#282624", lineHeight: 1.05 }}>
           Outbid Instagram profiles
