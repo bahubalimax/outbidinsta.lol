@@ -1,0 +1,218 @@
+// OutBidInsta — Prisma schema
+//
+// Ranking model: a listing's rank is the TOTAL amount ever paid toward it
+// (lifetime spend). Every confirmed payment adds to `Listing.totalCents`.
+// Three boards read different time windows of that spend:
+//   - all-time : Listing.totalCents (never expires)
+//   - today    : sum of Bid.amountCents confirmed in the last N hours (rolling)
+//   - daily    : sum of Bid.amountCents confirmed within a UTC calendar day
+//
+// All money is stored as INTEGER MINOR UNITS (US cents). Never use floats.
+// See src/lib/money.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // App runtime uses the pooled connection; migrations use the direct one.
+  // On platforms with a single URL (or local dev), point both at the same value.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+/// A person who has paid at least once. Identified only by email — we never
+/// store passwords or Instagram credentials for bidders.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bids     Bid[]
+  payments Payment[]
+
+  @@index([createdAt])
+}
+
+/// Database-driven category. Never hard-code the category list in app code.
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String   @default("")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings Listing[]
+
+  @@index([active, sortOrder])
+}
+
+enum ListingStatus {
+  PENDING // created, no confirmed payment yet — NOT shown on any board
+  ACTIVE // has >= 1 confirmed payment — shown on the boards
+  DISABLED // hidden by admin
+  REMOVED // removed by admin (fraud / policy)
+}
+
+/// One Instagram profile. Exactly one listing per normalized username.
+model Listing {
+  id           String        @id @default(cuid())
+  username     String        @unique // normalized, lowercase Instagram handle
+  instagramUrl String // canonical https://www.instagram.com/<username>/
+  displayName  String?
+  avatarUrl    String?
+  bio          String?
+  categoryId   String
+  currency     String        @default("USD")
+  totalCents   Int           @default(0) // lifetime confirmed spend = all-time rank basis
+  bidCount     Int           @default(0) // count of CONFIRMED payments
+  status       ListingStatus @default(PENDING)
+  firstBidderId String?
+  lastBidAt    DateTime?
+  createdAt    DateTime      @default(now()) // tie-break: older listing keeps the higher rank
+  updatedAt    DateTime      @updatedAt
+
+  category Category  @relation(fields: [categoryId], references: [id])
+  bids     Bid[]     @relation("ListingBids")
+  payments Payment[]
+
+  @@index([status, totalCents(sort: Desc), createdAt])
+  @@index([categoryId, status, totalCents(sort: Desc)])
+  @@index([status, lastBidAt])
+  @@index([createdAt])
+}
+
+enum BidStatus {
+  PENDING // payment not yet confirmed
+  CONFIRMED // payment verified — counts toward rank
+  FAILED // payment failed
+  CANCELLED // user abandoned checkout
+  REFUNDED // a previously-confirmed contribution that was refunded
+  DISPUTED // chargeback / dispute opened
+  VOID // payment cleared but could not be applied (listing removed) — refunded
+}
+
+/// A single paid contribution toward a listing's rank.
+/// `amountCents` is what the customer was actually charged (the DIFFERENCE when
+/// topping up an existing listing). `targetTotalCents` is the lifetime total the
+/// bidder was aiming for.
+model Bid {
+  id               String    @id @default(cuid())
+  listingId        String
+  bidderId         String
+  amountCents      Int // amount charged for this contribution
+  targetTotalCents Int // lifetime total the bidder aimed to reach
+  basedOnTotalCents Int // listing.totalCents at the moment the intent was created
+  currency         String    @default("USD")
+  status           BidStatus @default(PENDING)
+  intendedTop      Boolean   @default(false) // bidder was trying to take #1
+  paymentId        String?   @unique
+  confirmedAt      DateTime? // used for the Today / Daily windows
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  listing Listing  @relation("ListingBids", fields: [listingId], references: [id])
+  bidder  User     @relation(fields: [bidderId], references: [id])
+  payment Payment? @relation("BidPayment", fields: [paymentId], references: [id])
+
+  @@index([status, confirmedAt])
+  @@index([listingId, status, confirmedAt])
+  @@index([listingId, createdAt])
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  cancelled
+  refunded
+  disputed
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  provider           String        @default("dodo")
+  providerPaymentId  String?
+  providerCheckoutId String?
+  checkoutUrl        String?
+  listingId          String
+  bidId              String?
+  userId             String?
+  amountCents        Int
+  currency           String        @default("USD")
+  status             PaymentStatus @default(pending)
+  failureReason      String?
+  metadata           Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  bid     Bid?    @relation("BidPayment")
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerPaymentId])
+  @@index([status])
+  @@index([listingId])
+  @@index([createdAt])
+}
+
+/// Raw record of every webhook received, for idempotency + audit.
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    @default("dodo")
+  eventId     String
+  eventType   String
+  payload     Json
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, eventId])
+  @@index([eventType])
+  @@index([processed])
+  @@index([createdAt])
+}
+
+enum ActivityType {
+  NEW_LISTING
+  CLAIM
+  RAISE
+}
+
+/// Public activity feed entry. No personal or payment information.
+model ActivityEvent {
+  id           String       @id @default(cuid())
+  type         ActivityType
+  listingId    String
+  username     String
+  categorySlug String?
+  rank         Int?
+  amountCents  Int? // amount charged for the contribution
+  totalCents   Int? // listing lifetime total after the contribution
+  currency     String       @default("USD")
+  createdAt    DateTime     @default(now())
+
+  @@index([createdAt])
+}
+
+/// Single-row table (id = 1) holding configurable business rules.
+model Settings {
+  id                    Int      @id @default(1)
+  startingBidCents      Int      @default(1000) // $10 minimum for a new listing
+  minIncrementCents     Int      @default(100) // $1 granularity for raising a rank
+  takeTopIncrementCents Int      @default(500) // $5 more than #1 to take #1
+  maxBidCents           Int      @default(99999900) // $999,999 ceiling
+  currency              String   @default("USD")
+  todayWindowHours      Int      @default(24)
+  dailyBoardEnabled     Boolean  @default(true)
+  listingsEnabled       Boolean  @default(true)
+  biddingEnabled        Boolean  @default(true)
+  autoRefundVoided      Boolean  @default(true) // refund payments that cannot be applied
+  updatedAt             DateTime @updatedAt
+}
