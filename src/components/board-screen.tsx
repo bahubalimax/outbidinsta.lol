@@ -94,7 +94,7 @@ export async function BoardScreen({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-3 pb-16 md:gap-8 md:pt-4">
       <div className="flex flex-col gap-5 md:gap-6">
-        <BoardTabs active={board} />
+        <BoardTabs active={board} showDaily={settings.dailyBoardEnabled} />
 
         {isPage1 && (
           <ClaimForm

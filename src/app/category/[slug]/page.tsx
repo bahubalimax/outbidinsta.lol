@@ -73,7 +73,7 @@ export default async function CategoryPage({
         )}
       </div>
 
-      <BoardTabs active="all" />
+      <BoardTabs active="all" showDaily={settings.dailyBoardEnabled} />
 
       <LeaderboardList rows={result.rows} tiered={page === 1} />
 

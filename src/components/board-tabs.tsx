@@ -9,7 +9,15 @@ const TABS: { key: Board; label: string; href: string }[] = [
   { key: "daily", label: "Daily", href: "/daily" },
 ];
 
-export function BoardTabs({ active }: { active: Board }) {
+export function BoardTabs({
+  active,
+  showDaily = true,
+}: {
+  active: Board;
+  /** Admin setting (Settings.dailyBoardEnabled) — hides the tab without removing the route. */
+  showDaily?: boolean;
+}) {
+  const tabs = showDaily ? TABS : TABS.filter((t) => t.key !== "daily");
   return (
     <div className="flex justify-center">
       <div
@@ -17,7 +25,7 @@ export function BoardTabs({ active }: { active: Board }) {
         aria-label="Ranking board"
         className="inline-flex items-center rounded-full border border-border p-0.5"
       >
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <Link
             key={t.key}
             href={t.href}
