@@ -16,11 +16,11 @@ export function SiteHeader({
   return (
     <header className="w-full border-b border-border/70">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 pt-6 pb-3.5 md:pb-4">
-        <div className="flex w-full items-center justify-between gap-4">
+        <div className="flex w-full items-center justify-between gap-2 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               href="/"
-              className="inline-flex shrink-0 items-center text-[20px] font-semibold tracking-[-0.03em] sm:text-[22px]"
+              className="inline-flex min-w-0 shrink items-center text-[14px] font-semibold tracking-[-0.02em] sm:shrink-0 sm:text-[22px] sm:tracking-[-0.03em]"
             >
               <Logo />
             </Link>
@@ -29,9 +29,9 @@ export function SiteHeader({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-4">
             <nav aria-label="Main">
-              <ul className="flex items-center gap-3 text-xs sm:gap-5 sm:text-sm">
+              <ul className="flex items-center gap-2.5 text-xs sm:gap-5 sm:text-sm">
                 {PRIMARY_NAV.map((item) => (
                   <li key={item.href} className={item.hideOnMobile ? "hidden md:block" : ""}>
                     <Link

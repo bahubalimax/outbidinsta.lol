@@ -13,7 +13,9 @@ export const AFFILIATION_DISCLAIMER =
   "OutBidInsta is an independent platform and is not affiliated with Instagram or Meta.";
 
 export const PRIMARY_NAV: { href: string; label: string; hideOnMobile?: boolean }[] = [
-  { href: "/leaderboard", label: "Leaderboard" },
+  // "Leaderboard" points at "/", same as the logo — hidden on mobile to leave
+  // the header enough room for the wordmark without overlapping.
+  { href: "/leaderboard", label: "Leaderboard", hideOnMobile: true },
   { href: "/categories", label: "Categories" },
   { href: "/activity", label: "Activity" },
   { href: "/how-it-works", label: "How it works", hideOnMobile: true },
