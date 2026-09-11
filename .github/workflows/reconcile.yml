@@ -15,7 +15,7 @@ jobs:
       - name: Call reconcile endpoint
         run: |
           status=$(curl -s -o /tmp/body.json -w "%{http_code}" \
-            -X POST "https://outbidinsta.lol/api/cron/reconcile" \
+            -X POST "https://www.outbidinsta.lol/api/cron/reconcile" \
             -H "Authorization: Bearer ${{ secrets.RECONCILE_SECRET }}")
           echo "HTTP status: $status"
           cat /tmp/body.json
