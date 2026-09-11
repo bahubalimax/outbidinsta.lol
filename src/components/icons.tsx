@@ -143,6 +143,63 @@ export function IconInstagram({ className, ...p }: P) {
   );
 }
 
+export function IconLinkedIn({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className ?? base} {...p}>
+      <circle cx="6.5" cy="7" r="1.8" />
+      <rect x="5" y="10" width="3" height="9" />
+      <path d="M11 10h3v1.4c.7-1 1.8-1.7 3.3-1.7 2.6 0 4.2 1.7 4.2 5V19h-3v-3.9c0-1.6-.6-2.6-2-2.6-1.1 0-1.8.8-2.1 1.5-.1.3-.1.6-.1 1V19h-3z" />
+    </svg>
+  );
+}
+
+export function IconReddit({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className ?? base} {...p}>
+      <circle cx="12" cy="14.5" r="7" fill="currentColor" />
+      <circle cx="18.5" cy="8.5" r="1.6" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M12 8 12.8 3l3.8 1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="9.2" cy="14" r="1.2" fill="#17141d" />
+      <circle cx="14.8" cy="14" r="1.2" fill="#17141d" />
+      <path d="M9 17.5c1.5 1.1 4.5 1.1 6 0" stroke="#17141d" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconDownload({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className ?? base} {...p}>
+      <path
+        d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconLink({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className ?? base} {...p}>
+      <path
+        d="M9.5 14.5 14.5 9.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M11 6.5 12.4 5a4 4 0 1 1 5.6 5.6L16.5 12M13 17.5 11.6 19a4 4 0 1 1-5.6-5.6L7.5 12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconExternal({ className, ...p }: P) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className ?? "size-3.5"} {...p}>
