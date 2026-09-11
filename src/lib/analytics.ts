@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
+import { utcDayRange } from "@/lib/date-windows";
 
 /**
  * Minimal, self-hosted analytics — a "just enough" stand-in for a paid tool
@@ -173,19 +174,21 @@ export interface HeaderStats {
 
 /**
  * Header pill + public /stats numbers: "active now" (last 5 min), "visitors
- * today" (rolling 24h, matching the site's own "Today" board window), and
- * all-time. All three real pageview counts, computed from ONE query batch so
- * they're always a consistent snapshot — today's count can never exceed
- * all-time's, since today is a subset of it. (Splitting these across two
- * separately-cached functions with different revalidate windows previously
- * let them drift out of sync and show a logically impossible result.)
+ * today" (the current UTC calendar day — resets at midnight UTC, matching
+ * what "today" normally means, and the same day boundary the Daily board
+ * uses), and all-time. All three real pageview counts, computed from ONE
+ * query batch so they're always a consistent snapshot — today's count can
+ * never exceed all-time's, since today is a subset of it. (Splitting these
+ * across two separately-cached functions with different revalidate windows
+ * previously let them drift out of sync and show a logically impossible
+ * result.)
  */
 const getHeaderStatsUncached = async (): Promise<HeaderStats> => {
   const since5m = new Date(Date.now() - 5 * 60 * 1000);
-  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const { start: todayStart } = utcDayRange();
   const [activeNow, visitorsToday, visitorsAllTime] = await Promise.all([
     prisma.pageView.count({ where: { createdAt: { gte: since5m } } }),
-    prisma.pageView.count({ where: { createdAt: { gte: since24h } } }),
+    prisma.pageView.count({ where: { createdAt: { gte: todayStart } } }),
     prisma.pageView.count(),
   ]);
   return { activeNow, visitorsToday, visitorsAllTime };
@@ -194,3 +197,26 @@ const getHeaderStatsUncached = async (): Promise<HeaderStats> => {
 export const getHeaderStats = unstable_cache(getHeaderStatsUncached, ["header-stats"], {
   revalidate: 20,
 });
+
+export interface CountryStat {
+  code: string;
+  count: number;
+}
+
+/** Public, all-time country breakdown for the /stats page — counts only, no page/referrer detail. */
+const getPublicCountryBreakdownUncached = async (): Promise<CountryStat[]> => {
+  const rows = await prisma.pageView.groupBy({
+    by: ["country"],
+    where: { country: { not: null } },
+    _count: { country: true },
+    orderBy: { _count: { country: "desc" } },
+    take: 8,
+  });
+  return rows.map((r) => ({ code: r.country ?? "??", count: r._count.country }));
+};
+
+export const getPublicCountryBreakdown = unstable_cache(
+  getPublicCountryBreakdownUncached,
+  ["public-country-breakdown"],
+  { revalidate: 300 },
+);

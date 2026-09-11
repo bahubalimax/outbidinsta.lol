@@ -2,8 +2,8 @@ import Link from "next/link";
 
 /**
  * Small "live" indicator in the header. Both numbers (when shown) are real
- * pageview counts — "active" in the last 5 minutes, "visitors today" over a
- * rolling 24h (see getHeaderStats in src/lib/analytics.ts) — never
+ * pageview counts — "active" in the last 5 minutes, "visitors today" since
+ * midnight UTC (see getHeaderStats in src/lib/analytics.ts) — never
  * fabricated. At near-zero traffic we fall back to the plain label instead
  * of showing bare zeros, which would read as broken rather than honest.
  */
