@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/money";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/components/ui";
 import { IconInstagram, IconTag, IconChevronRight } from "@/components/icons";
+import { RankBadge } from "@/components/rank-badge";
 
 const TIER_BG = ["bg-primary/[0.14]", "bg-primary/[0.08]", "bg-primary/[0.04]"] as const;
 const TIER_AVATAR = ["size-14 md:size-[4.5rem]", "size-12 md:size-16", "size-10 md:size-14"] as const;
@@ -111,17 +112,18 @@ function TierRow({ row, tier }: { row: LeaderboardRow; tier: 0 | 1 | 2 }) {
         >
           <div className="flex items-start gap-2 px-3 py-3 md:gap-3 md:px-4 md:py-4">
             <div className="flex shrink-0 items-center md:gap-3">
-              <span className="hidden min-w-10 items-center justify-center text-base font-semibold text-primary tabular-nums md:inline-flex">
-                #{row.rank}
+              <span className="relative hidden md:inline-flex">
+                {row.rank === 1 && (
+                  <span className="obi-pulse absolute inset-0 rounded-lg bg-amber-400/30" aria-hidden />
+                )}
+                <RankBadge rank={row.rank} className="relative" />
               </span>
               <Avatar username={row.username} src={row.avatarUrl} className={TIER_AVATAR[tier]} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-2">
                 <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground md:text-base">
-                  <span className="mr-1.5 font-semibold text-primary tabular-nums md:hidden">
-                    #{row.rank}
-                  </span>
+                  <RankBadge rank={row.rank} className="mr-1.5 h-6 min-w-6 text-xs md:hidden" />
                   {row.displayName ? `${row.displayName} · @${row.username}` : `@${row.username}`}
                 </p>
                 <p className="shrink-0 text-sm font-semibold text-primary tabular-nums md:text-base">

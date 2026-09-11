@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 
 /**
@@ -139,3 +140,18 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     hourly,
   };
 }
+
+/**
+ * A genuine (not fabricated) "activity" count for the header pill — pageviews
+ * in the last 5 minutes. Not a distinct-visitor count (we don't track
+ * sessions), so callers should phrase it as activity, not "N people online".
+ * Cached briefly since it's rendered in the header on every page load.
+ */
+const getActiveNowUncached = async (): Promise<number> => {
+  const since = new Date(Date.now() - 5 * 60 * 1000);
+  return prisma.pageView.count({ where: { createdAt: { gte: since } } });
+};
+
+export const getActiveNow = unstable_cache(getActiveNowUncached, ["active-now"], {
+  revalidate: 20,
+});

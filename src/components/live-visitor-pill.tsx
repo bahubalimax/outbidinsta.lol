@@ -1,10 +1,13 @@
 import Link from "next/link";
 
 /**
- * Small "live" indicator in the header. Deliberately shows no fabricated
- * visitor/online counts — just links to the public activity feed.
+ * Small "live" indicator in the header. The number (when shown) is a real
+ * count of pageviews in the last 5 minutes (see getActiveNow in
+ * src/lib/analytics.ts) — never fabricated. At near-zero traffic we fall
+ * back to the plain label instead of showing a bare "0", which would read
+ * as broken rather than honest.
  */
-export function LiveVisitorPill() {
+export function LiveVisitorPill({ activeNow = 0 }: { activeNow?: number }) {
   return (
     <Link
       href="/activity"
@@ -14,7 +17,13 @@ export function LiveVisitorPill() {
         <span className="obi-ping absolute inline-flex size-full rounded-full bg-live/50" />
         <span className="relative inline-flex size-2 rounded-full bg-live" />
       </span>
-      <span>Live leaderboard</span>
+      {activeNow > 0 ? (
+        <span className="tabular-nums">
+          {activeNow} active <span className="text-foreground">now</span>
+        </span>
+      ) : (
+        <span>Live leaderboard</span>
+      )}
       <span className="text-foreground"> · activity →</span>
     </Link>
   );

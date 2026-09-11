@@ -8,8 +8,10 @@ import { Logo } from "@/components/logo";
 
 export function SiteHeader({
   categories,
+  activeNow = 0,
 }: {
   categories: { name: string; slug: string }[];
+  activeNow?: number;
 }) {
   return (
     <header className="w-full border-b border-border/70">
@@ -23,7 +25,7 @@ export function SiteHeader({
               <Logo />
             </Link>
             <div className="hidden min-w-0 md:block">
-              <LiveVisitorPill />
+              <LiveVisitorPill activeNow={activeNow} />
             </div>
           </div>
 
