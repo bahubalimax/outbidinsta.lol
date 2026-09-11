@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Alert, Card } from "@/components/ui";
+import { ShareTicket } from "@/components/share-ticket";
+import { SITE_NAME } from "@/lib/site";
 
 interface Status {
   outcome:
@@ -82,6 +84,11 @@ export function CheckoutReturn({ bidId }: { bidId: string }) {
   }
 
   if (status.outcome === "applied" || status.outcome === "applied_below_target") {
+    const shareText =
+      status.globalRank === 1
+        ? `I'm currently #1 on ${SITE_NAME} 🔥 Can you outbid me?`
+        : `@${status.username} is #${status.globalRank ?? "—"} on ${SITE_NAME}. Outbid to take the top spot.`;
+
     return (
       <Card className="p-6 text-center">
         <p className="text-3xl">{status.outcome === "applied" ? "🎉" : "✅"}</p>
@@ -98,6 +105,9 @@ export function CheckoutReturn({ bidId }: { bidId: string }) {
         >
           View the listing
         </Link>
+        <div className="mt-6">
+          <ShareTicket username={status.username} text={shareText} />
+        </div>
       </Card>
     );
   }

@@ -8,6 +8,7 @@ import { LeaderboardAvatar as Avatar } from "@/components/leaderboard-list";
 import { RankBadge } from "@/components/rank-badge";
 import { OutbidWidget } from "@/components/outbid-widget";
 import { ShareButton } from "@/components/share-button";
+import { ShareTicket } from "@/components/share-ticket";
 import { Card, Badge } from "@/components/ui";
 import { IconExternal } from "@/components/icons";
 import { absoluteUrl, SITE_NAME, AFFILIATION_DISCLAIMER } from "@/lib/site";
@@ -154,6 +155,13 @@ export default async function ProfilePage({
           <ShareButton url={absoluteUrl(`/profile/${view.username}`)} text={shareText} />
         </div>
       </div>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Share your rank</h2>
+        <div className="mt-3">
+          <ShareTicket username={view.username} text={shareText} />
+        </div>
+      </section>
 
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Bid history</h2>
