@@ -66,11 +66,11 @@ function PillLink({
       className={cn(
         "inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8rem] font-semibold whitespace-nowrap transition-colors",
         active
-          ? "bg-primary text-primary-foreground"
+          ? "bg-foreground text-background"
           : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
       )}
     >
-      <span className={active ? "text-primary-foreground/85" : "text-primary/70"}>{icon}</span>
+      <span className={active ? "text-background/80" : "text-primary/70"}>{icon}</span>
       {children}
     </Link>
   );

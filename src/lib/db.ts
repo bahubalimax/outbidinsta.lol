@@ -1,15 +1,28 @@
 import "server-only";
 import { PrismaClient } from "@prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+// Neon's serverless driver talks to the database over a pooled WebSocket
+// instead of raw TCP+TLS. This avoids a fresh DNS lookup + TCP/TLS handshake
+// on every connection (the thing that made each query take 1-2s over a
+// slow/high-latency network path) — the driver keeps one connection open and
+// multiplexes queries over it. See CLAUDE.md "Deploy notes".
+neonConfig.webSocketConstructor = ws;
 
 /**
- * Single shared PrismaClient. In dev, Next.js hot-reload would otherwise create
- * a new client on every change and exhaust the connection pool.
+ * Single shared PrismaClient. In dev, Next.js hot-reload would otherwise
+ * create a new client (and a new pooled connection) on every change.
  */
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 

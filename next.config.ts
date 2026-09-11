@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // These ship native/optional bindings (ws's bufferutil/utf-8-validate) that
+  // webpack's server bundling mishandles — keep them as real `require()`s.
+  serverExternalPackages: ["ws", "@neondatabase/serverless", "@prisma/adapter-neon"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.cdninstagram.com" },
