@@ -125,6 +125,14 @@ export function IconChevronDown({ className, ...p }: P) {
   );
 }
 
+export function IconX({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className ?? base} {...p}>
+      <path d="M18.3 3h3.2l-7 8 8.2 10h-6.4l-5-6.5L5 21H1.8l7.5-8.6L1.4 3h6.5l4.5 6zM17 19.3h1.8L7.1 4.6H5.2z" />
+    </svg>
+  );
+}
+
 export function IconInstagram({ className, ...p }: P) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className ?? base} {...p}>

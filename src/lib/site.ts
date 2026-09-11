@@ -29,6 +29,10 @@ export const FOOTER_NAV = [
   { href: "/contact", label: "Contact" },
 ];
 
+export const SOCIAL_LINKS: { href: string; label: string }[] = [
+  { href: "https://x.com/outbidinsta", label: "X (Twitter)" },
+];
+
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
