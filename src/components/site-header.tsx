@@ -9,7 +9,7 @@ import type { HeaderStats } from "@/lib/analytics";
 
 export function SiteHeader({
   categories,
-  headerStats = { activeNow: 0, visitorsToday: 0 },
+  headerStats = { activeNow: 0, visitorsToday: 0, visitorsAllTime: 0 },
 }: {
   categories: { name: string; slug: string }[];
   headerStats?: HeaderStats;

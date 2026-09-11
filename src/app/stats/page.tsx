@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
-import { getHeaderStats, getAllTimeVisitors } from "@/lib/analytics";
+import { getHeaderStats } from "@/lib/analytics";
 import { formatMoney } from "@/lib/money";
 import { SITE_NAME } from "@/lib/site";
 
@@ -14,15 +14,13 @@ export const metadata: Metadata = {
 };
 
 export default async function StatsPage() {
-  const [settings, headerStats, allTimeVisitors, revenueAgg, activeListings, totalListings] =
-    await Promise.all([
-      getSettings(),
-      getHeaderStats(),
-      getAllTimeVisitors(),
-      prisma.payment.aggregate({ _sum: { amountCents: true }, where: { status: "paid" } }),
-      prisma.listing.count({ where: { status: "ACTIVE" } }),
-      prisma.listing.count(),
-    ]);
+  const [settings, headerStats, revenueAgg, activeListings, totalListings] = await Promise.all([
+    getSettings(),
+    getHeaderStats(),
+    prisma.payment.aggregate({ _sum: { amountCents: true }, where: { status: "paid" } }),
+    prisma.listing.count({ where: { status: "ACTIVE" } }),
+    prisma.listing.count(),
+  ]);
 
   const revenue = formatMoney(revenueAgg._sum.amountCents ?? 0, settings.currency);
 
@@ -37,7 +35,7 @@ export default async function StatsPage() {
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat value={String(headerStats.activeNow)} label="online now" />
         <Stat value={headerStats.visitorsToday.toLocaleString()} label="visitors today" />
-        <Stat value={allTimeVisitors.toLocaleString()} label="visitors all-time" />
+        <Stat value={headerStats.visitorsAllTime.toLocaleString()} label="visitors all-time" />
         <Stat value={revenue} label="confirmed bids value" />
         <Stat value={String(activeListings)} label="profiles ranked" />
         <Stat value={String(totalListings)} label="profiles claimed (ever)" />

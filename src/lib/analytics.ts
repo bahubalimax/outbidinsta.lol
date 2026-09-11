@@ -168,32 +168,29 @@ export const getActiveNow = unstable_cache(getActiveNowUncached, ["active-now"],
 export interface HeaderStats {
   activeNow: number;
   visitorsToday: number;
+  visitorsAllTime: number;
 }
 
 /**
- * Header pill numbers: "active now" (last 5 min) and "visitors today" (last
- * rolling 24h, matching the site's own "Today" board window rather than a
- * UTC-midnight reset). Both are real pageview counts — see getActiveNow.
+ * Header pill + public /stats numbers: "active now" (last 5 min), "visitors
+ * today" (rolling 24h, matching the site's own "Today" board window), and
+ * all-time. All three real pageview counts, computed from ONE query batch so
+ * they're always a consistent snapshot — today's count can never exceed
+ * all-time's, since today is a subset of it. (Splitting these across two
+ * separately-cached functions with different revalidate windows previously
+ * let them drift out of sync and show a logically impossible result.)
  */
 const getHeaderStatsUncached = async (): Promise<HeaderStats> => {
   const since5m = new Date(Date.now() - 5 * 60 * 1000);
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const [activeNow, visitorsToday] = await Promise.all([
+  const [activeNow, visitorsToday, visitorsAllTime] = await Promise.all([
     prisma.pageView.count({ where: { createdAt: { gte: since5m } } }),
     prisma.pageView.count({ where: { createdAt: { gte: since24h } } }),
+    prisma.pageView.count(),
   ]);
-  return { activeNow, visitorsToday };
+  return { activeNow, visitorsToday, visitorsAllTime };
 };
 
 export const getHeaderStats = unstable_cache(getHeaderStatsUncached, ["header-stats"], {
   revalidate: 20,
-});
-
-/** All-time pageview count, for the public "stats since launch" strip. */
-const getAllTimeVisitorsUncached = async (): Promise<number> => {
-  return prisma.pageView.count();
-};
-
-export const getAllTimeVisitors = unstable_cache(getAllTimeVisitorsUncached, ["all-time-visitors"], {
-  revalidate: 60,
 });

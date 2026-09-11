@@ -62,7 +62,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [categories, headerStats] = await Promise.all([
     getActiveCategoriesForForm().catch(() => []),
-    getHeaderStats().catch(() => ({ activeNow: 0, visitorsToday: 0 })),
+    getHeaderStats().catch(() => ({ activeNow: 0, visitorsToday: 0, visitorsAllTime: 0 })),
   ]);
 
   return (
