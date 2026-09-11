@@ -12,6 +12,18 @@ const WIDTH = 1080;
 const HEIGHT = 1350;
 const BRAND_GRADIENT = "linear-gradient(135deg, #6a3df5 0%, #e1306c 55%, #f9a13b 100%)";
 
+/** Decorative confetti scattered in the dark margin around the ticket card. */
+const CONFETTI: { top: number; left: number; w: number; h: number; color: string; rot: number; round?: boolean }[] = [
+  { top: 35, left: 55, w: 26, h: 42, color: "#e1306c", rot: -18 },
+  { top: 100, left: 135, w: 16, h: 16, color: "#f9a13b", rot: 0, round: true },
+  { top: 25, left: 940, w: 22, h: 36, color: "#6a3df5", rot: 22 },
+  { top: 620, left: 18, w: 30, h: 30, color: "#f9a13b", rot: -10, round: true },
+  { top: 700, left: 1015, w: 24, h: 40, color: "#e1306c", rot: 25 },
+  { top: 1230, left: 75, w: 18, h: 18, color: "#6a3df5", rot: 0, round: true },
+  { top: 1260, left: 955, w: 26, h: 38, color: "#f9a13b", rot: -15 },
+  { top: 480, left: 1020, w: 14, h: 14, color: "#e1306c", rot: 0, round: true },
+];
+
 /**
  * A shareable "ticket" card for a claimed/raised rank — generated on demand,
  * cached at the edge. Used by <ShareTicket> on the checkout-return page and
@@ -81,10 +93,28 @@ export async function GET(
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#17141d",
+          background: "linear-gradient(160deg, #1d1830 0%, #17141d 55%, #1a1119 100%)",
           fontFamily: "sans-serif",
         }}
       >
+        {CONFETTI.map((c, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              display: "flex",
+              top: c.top,
+              left: c.left,
+              width: c.w,
+              height: c.h,
+              borderRadius: c.round ? 999 : 6,
+              background: c.color,
+              transform: `rotate(${c.rot}deg)`,
+              opacity: 0.9,
+            }}
+          />
+        ))}
+
         <div
           style={{
             position: "relative",
@@ -94,10 +124,24 @@ export async function GET(
             height: 1150,
             borderRadius: 48,
             padding: "56px 64px",
-            background: "linear-gradient(160deg, #f4e9ff 0%, #ffe1ee 45%, #fff2df 100%)",
-            boxShadow: "0 40px 100px rgba(0,0,0,0.45)",
+            background: "linear-gradient(155deg, #ecd6ff 0%, #ffc9e3 42%, #ffe0b0 100%)",
+            boxShadow: "0 40px 100px rgba(0,0,0,0.5)",
+            overflow: "hidden",
           }}
         >
+          {/* Diagonal sheen */}
+          <div
+            style={{
+              position: "absolute",
+              top: -200,
+              left: -100,
+              width: 500,
+              height: 1550,
+              background: "linear-gradient(100deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 60%)",
+              transform: "rotate(12deg)",
+              display: "flex",
+            }}
+          />
           {/* Ticket notches */}
           <div
             style={{
