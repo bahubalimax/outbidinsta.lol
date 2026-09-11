@@ -4,7 +4,6 @@ import { getSettings } from "@/lib/settings";
 import {
   getHeaderStats,
   getPublicCountryBreakdown,
-  getPublicReferrerBreakdown,
   getPublicBrowserBreakdown,
   type LabeledStat,
 } from "@/lib/analytics";
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StatsPage() {
-  const [settings, headerStats, revenueAgg, activeListings, totalListings, countries, referrers, browsers] =
+  const [settings, headerStats, revenueAgg, activeListings, totalListings, countries, browsers] =
     await Promise.all([
       getSettings(),
       getHeaderStats(),
@@ -38,7 +37,6 @@ export default async function StatsPage() {
       prisma.listing.count({ where: { status: "ACTIVE" } }),
       prisma.listing.count(),
       getPublicCountryBreakdown(),
-      getPublicReferrerBreakdown(),
       getPublicBrowserBreakdown(),
     ]);
 
@@ -85,10 +83,6 @@ export default async function StatsPage() {
             ))}
           </div>
         </div>
-      )}
-
-      {referrers.length > 0 && (
-        <BarSection title="Visitors by source" rows={referrers} />
       )}
 
       {browsers.length > 0 && <BarSection title="Visitors by browser" rows={browsers} />}
