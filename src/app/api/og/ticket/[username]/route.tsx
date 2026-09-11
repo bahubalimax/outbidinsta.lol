@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getProfileView } from "@/lib/profile";
 import { formatMoney } from "@/lib/money";
-import { SITE_NAME } from "@/lib/site";
 import { prisma } from "@/lib/db";
 import { fetchInstagramAvatarUrl, toAvatarDataUri } from "@/lib/instagram-avatar";
 
@@ -10,7 +9,19 @@ export const dynamic = "force-dynamic";
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
+const CARD_WIDTH = 880;
+const CARD_HEIGHT = 1150;
+const CARD_LEFT = (WIDTH - CARD_WIDTH) / 2;
+const CARD_TOP = (HEIGHT - CARD_HEIGHT) / 2;
 const BRAND_GRADIENT = "linear-gradient(135deg, #6a3df5 0%, #e1306c 55%, #f9a13b 100%)";
+
+/** Evenly-spaced x offsets (within the card) for the scalloped edge notches. */
+const SCALLOP_SIZE = 34;
+const SCALLOP_COUNT = 14;
+const SCALLOP_INSET = 44;
+const SCALLOP_X = Array.from({ length: SCALLOP_COUNT }, (_, i) =>
+  SCALLOP_INSET + ((CARD_WIDTH - SCALLOP_INSET * 2) / (SCALLOP_COUNT - 1)) * i,
+);
 
 /** Decorative confetti scattered in the dark margin around the ticket card. */
 const CONFETTI: { top: number; left: number; w: number; h: number; color: string; rot: number; round?: boolean }[] = [
@@ -45,10 +56,8 @@ export async function GET(
 
   const handle = view?.username ?? username;
   const rank = view?.globalRank ?? null;
-  const category = view?.category.name ?? "Instagram";
   const currency = view?.currency ?? "USD";
   const initial = handle.replace(/[^a-z0-9]/gi, "").slice(0, 1).toUpperCase() || "?";
-  const dateLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   // Real profile photo when we can get one — never blocks on failure, the
   // initials ring above is always the fallback.
@@ -62,12 +71,6 @@ export async function GET(
   const avatarDataUri = avatarUrl ? await toAvatarDataUri(avatarUrl) : null;
 
   const headline = "Top Bidder";
-  const subtitle =
-    rank === 1
-      ? "Certified #1 bidder"
-      : rank
-        ? "Certified top-ranked bidder"
-        : "Certified leaderboard listing";
 
   const latestBid = view?.history[0] ?? null;
   const amountCents = latestBid?.amountCents ?? view?.lifetimeTotalCents ?? 0;
@@ -120,11 +123,11 @@ export async function GET(
             position: "relative",
             display: "flex",
             flexDirection: "column",
-            width: 880,
-            height: 1150,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
             borderRadius: 48,
             padding: "56px 64px",
-            background: "linear-gradient(155deg, #ecd6ff 0%, #ffc9e3 42%, #ffe0b0 100%)",
+            background: "linear-gradient(160deg, #f2e7ff 0%, #ffe1ee 45%, #fff2df 100%)",
             boxShadow: "0 40px 100px rgba(0,0,0,0.5)",
             overflow: "hidden",
           }}
@@ -142,32 +145,6 @@ export async function GET(
               display: "flex",
             }}
           />
-          {/* Ticket notches */}
-          <div
-            style={{
-              position: "absolute",
-              left: -44,
-              top: 560,
-              width: 88,
-              height: 88,
-              borderRadius: 999,
-              background: "#17141d",
-              display: "flex",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: -44,
-              top: 560,
-              width: 88,
-              height: 88,
-              borderRadius: 999,
-              background: "#17141d",
-              display: "flex",
-            }}
-          />
-
           {/* Top row: logo mark (left) + rank badge (right) */}
           <div
             style={{
@@ -180,21 +157,31 @@ export async function GET(
           >
             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 14 }}>
               <svg width="44" height="40" viewBox="0 0 36 32" fill="none">
+                <defs>
+                  <linearGradient id="obiLogoGrad" x1="0" y1="32" x2="36" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#6a3df5" />
+                    <stop offset="55%" stopColor="#e1306c" />
+                    <stop offset="100%" stopColor="#f9a13b" />
+                  </linearGradient>
+                </defs>
                 <rect x="22" y="0" width="14" height="6" rx="3" fill="#f9a13b" />
                 <rect x="12" y="11" width="24" height="6" rx="3" fill="#e1306c" />
-                <rect x="0" y="22" width="36" height="6" rx="3" fill="#6a3df5" />
+                <rect x="0" y="22" width="36" height="6" rx="3" fill="url(#obiLogoGrad)" />
               </svg>
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 22,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  color: "#a3372f",
-                  textTransform: "uppercase",
-                }}
-              >
-                {SITE_NAME}
+              <div style={{ display: "flex", fontSize: 26, fontWeight: 700 }}>
+                <span style={{ display: "flex", color: "#241f1c" }}>outbid</span>
+                <span
+                  style={{
+                    display: "flex",
+                    backgroundImage: BRAND_GRADIENT,
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  insta
+                </span>
+                <span style={{ display: "flex", color: "#9a8f89" }}>.lol</span>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
@@ -228,46 +215,36 @@ export async function GET(
                   background: BRAND_GRADIENT,
                   alignItems: "center",
                   justifyContent: "center",
+                  padding: 6,
                 }}
               >
                 <div
                   style={{
                     display: "flex",
-                    width: 192,
-                    height: 192,
+                    width: "100%",
+                    height: "100%",
                     borderRadius: 999,
-                    background: "#fff8f0",
+                    overflow: "hidden",
+                    background: BRAND_GRADIENT,
                     alignItems: "center",
                     justifyContent: "center",
+                    fontSize: 72,
+                    fontWeight: 800,
+                    color: "#fff",
+                    border: "4px solid #fff8f0",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      width: 176,
-                      height: 176,
-                      borderRadius: 999,
-                      overflow: "hidden",
-                      background: BRAND_GRADIENT,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 72,
-                      fontWeight: 800,
-                      color: "#fff",
-                    }}
-                  >
-                    {avatarDataUri ? (
-                      <img
-                        src={avatarDataUri}
-                        alt=""
-                        width={176}
-                        height={176}
-                        style={{ objectFit: "cover" }}
-                      />
-                    ) : (
-                      initial
-                    )}
-                  </div>
+                  {avatarDataUri ? (
+                    <img
+                      src={avatarDataUri}
+                      alt=""
+                      width={196}
+                      height={196}
+                      style={{ objectFit: "cover" }}
+                    />
+                  ) : (
+                    initial
+                  )}
                 </div>
               </div>
               {rank === 1 && (
@@ -323,9 +300,7 @@ export async function GET(
             >
               {headline}
             </div>
-            <div style={{ display: "flex", marginTop: 10, fontSize: 26, color: "#7a6f68" }}>
-              {subtitle}
-            </div>
+            <div style={{ display: "flex", marginTop: 18, width: 160, height: 3, borderRadius: 999, background: "rgba(36,31,28,0.15)" }} />
           </div>
 
           {/* Identity */}
@@ -417,37 +392,91 @@ export async function GET(
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              flexDirection: "row",
               alignItems: "center",
+              justifyContent: "center",
               marginTop: "auto",
-              gap: 16,
+              gap: 24,
               width: "100%",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 24 }}>
-              <div style={{ display: "flex", gap: 4 }}>
-                {Array.from({ length: 34 }).map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: i % 3 === 0 ? 6 : 3,
-                      height: 48,
-                      background: "#241f1c",
-                      opacity: 0.8,
-                      display: "flex",
-                    }}
-                  />
-                ))}
-              </div>
-              <div style={{ display: "flex", fontSize: 24, fontStyle: "italic", fontWeight: 600, color: "#a3372f" }}>
-                Keep bidding!
-              </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {Array.from({ length: 34 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: i % 3 === 0 ? 6 : 3,
+                    height: 48,
+                    background: "#241f1c",
+                    opacity: 0.8,
+                    display: "flex",
+                  }}
+                />
+              ))}
             </div>
-            <div style={{ display: "flex", fontSize: 24, color: "#7a6f68" }}>
-              {`${category} · ${dateLabel}`}
+            <div
+              style={{
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                fontSize: 24,
+                fontStyle: "italic",
+                fontWeight: 600,
+                lineHeight: 1.15,
+                color: "#a3372f",
+                textAlign: "center",
+              }}
+            >
+              <span style={{ display: "flex" }}>Keep</span>
+              <span style={{ display: "flex" }}>Building!</span>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -8,
+                  right: 4,
+                  display: "flex",
+                  width: 60,
+                  height: 3,
+                  borderRadius: 999,
+                  background: "#6a3df5",
+                  transform: "rotate(-4deg)",
+                }}
+              />
             </div>
           </div>
         </div>
+
+        {/* Scalloped perforated edge along the card's top and bottom */}
+        {SCALLOP_X.map((x, i) => (
+          <div
+            key={`t${i}`}
+            style={{
+              position: "absolute",
+              display: "flex",
+              left: CARD_LEFT + x - SCALLOP_SIZE / 2,
+              top: CARD_TOP - SCALLOP_SIZE / 2,
+              width: SCALLOP_SIZE,
+              height: SCALLOP_SIZE,
+              borderRadius: 999,
+              background: "#18131d",
+            }}
+          />
+        ))}
+        {SCALLOP_X.map((x, i) => (
+          <div
+            key={`b${i}`}
+            style={{
+              position: "absolute",
+              display: "flex",
+              left: CARD_LEFT + x - SCALLOP_SIZE / 2,
+              top: CARD_TOP + CARD_HEIGHT - SCALLOP_SIZE / 2,
+              width: SCALLOP_SIZE,
+              height: SCALLOP_SIZE,
+              borderRadius: 999,
+              background: "#18131d",
+            }}
+          />
+        ))}
       </div>
     ),
     {
