@@ -67,6 +67,7 @@ export interface AnalyticsSummary {
   topPages: { path: string; count: number }[];
   topReferrers: { referrer: string; count: number }[];
   browsers: { browser: string; count: number }[];
+  countries: { country: string; count: number }[];
   hourly: { hour: string; count: number }[];
 }
 
@@ -75,7 +76,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
   const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const since7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const [pageviews24h, pageviews7d, topPagesRaw, topReferrersRaw, browsersRaw, recentRows] =
+  const [pageviews24h, pageviews7d, topPagesRaw, topReferrersRaw, browsersRaw, countriesRaw, recentRows] =
     await Promise.all([
       prisma.pageView.count({ where: { createdAt: { gte: since24h } } }),
       prisma.pageView.count({ where: { createdAt: { gte: since7d } } }),
@@ -98,6 +99,13 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
         where: { createdAt: { gte: since7d } },
         _count: { browser: true },
         orderBy: { _count: { browser: "desc" } },
+        take: 10,
+      }),
+      prisma.pageView.groupBy({
+        by: ["country"],
+        where: { createdAt: { gte: since7d }, country: { not: null } },
+        _count: { country: true },
+        orderBy: { _count: { country: "desc" } },
         take: 10,
       }),
       // Bucketed in JS below — simple and fine at this traffic scale.
@@ -137,6 +145,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
       count: r._count.referrer,
     })),
     browsers: browsersRaw.map((r) => ({ browser: r.browser ?? "Other", count: r._count.browser })),
+    countries: countriesRaw.map((r) => ({ country: r.country ?? "Unknown", count: r._count.country })),
     hourly,
   };
 }

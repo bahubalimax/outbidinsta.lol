@@ -43,13 +43,18 @@ export default async function AdminAnalytics() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Table title="Top pages (7d)" rows={summary.topPages.map((p) => [p.path, p.count])} />
         <Table
           title="Top referrers (7d)"
           rows={summary.topReferrers.map((r) => [r.referrer, r.count])}
         />
         <Table title="Browsers (7d)" rows={summary.browsers.map((b) => [b.browser, b.count])} />
+        <Table
+          title="Countries (7d)"
+          rows={summary.countries.map((c) => [c.country, c.count])}
+          emptyHint="Populated once traffic reaches the live domain (Vercel sends the visitor's country)."
+        />
       </div>
     </div>
   );
@@ -64,12 +69,20 @@ function Card({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Table({ title, rows }: { title: string; rows: [string, number][] }) {
+function Table({
+  title,
+  rows,
+  emptyHint,
+}: {
+  title: string;
+  rows: [string, number][];
+  emptyHint?: string;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <h2 className="mb-3 text-sm font-semibold">{title}</h2>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No data yet.</p>
+        <p className="text-sm text-muted-foreground">{emptyHint ?? "No data yet."}</p>
       ) : (
         <ul className="divide-y divide-border text-sm">
           {rows.map(([label, count]) => (
