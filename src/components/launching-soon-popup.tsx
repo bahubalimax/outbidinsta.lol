@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
-const DISMISS_KEY = "obi-try-now-popup-dismissed-at";
+const DISMISS_KEY = "obi-launching-soon-popup-dismissed-at";
 const SNOOZE_MS = 15 * 60 * 1000;
-const AUTO_CLOSE_MS = 2000;
+const AUTO_CLOSE_MS = 5000;
 
 function recentlyDismissed(): boolean {
   try {
@@ -26,11 +25,14 @@ function markDismissed(): void {
 }
 
 /**
- * Full-screen "try now, it costs nothing" nudge. Shows once per 15-minute
- * window (per browser), auto-closes after 2s if left alone. Same lifecycle
- * as <TestModeTicker/> — see TRY_NOW_POPUP_ENABLED in src/lib/site.ts.
+ * Full-screen "launching soon" notice — shows once per 15-minute window
+ * (per browser), auto-closes after 5s if left alone. The claim form itself
+ * stays fully visible/interactive-looking behind it so visitors get a feel
+ * for the product; this is just the heads-up that submitting won't work
+ * yet. Same lifecycle as <TestModeTicker/> — see LAUNCHING_SOON_POPUP_ENABLED
+ * in src/lib/site.ts.
  */
-export function TryNowPopup() {
+export function LaunchingSoonPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export function TryNowPopup() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Try OutBidInsta for free"
+      aria-label="Launching soon"
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={dismiss}
     >
@@ -75,24 +77,15 @@ export function TryNowPopup() {
           </svg>
         </button>
 
-        <div className="brand-gradient-bg mx-auto flex size-12 items-center justify-center rounded-2xl text-2xl text-white">
-          ⚡
+        <div className="brand-gradient-bg mx-auto flex size-12 items-center justify-center rounded-2xl text-2xl">
+          🚀
         </div>
 
-        <h2 className="brand-gradient-text mt-4 text-2xl font-bold tracking-tight">
-          Try now — it costs nothing
-        </h2>
+        <h2 className="mt-4 text-2xl font-bold tracking-tight">Launching soon</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          We&apos;re in test mode — claim a rank and see how it works. No real charges yet.
+          New listings are paused while we get everything ready. Check back shortly to claim your
+          rank.
         </p>
-
-        <Link
-          href="/#claim"
-          onClick={dismiss}
-          className="brand-gradient-bg mt-5 inline-flex h-11 w-full items-center justify-center rounded-full px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-        >
-          Try Now
-        </Link>
       </div>
     </div>
   );

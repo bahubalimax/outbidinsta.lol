@@ -162,6 +162,7 @@ export function ClaimForm({
   function openConfirm(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (closed) return setError("New listings are paused right now — launching again shortly!");
     if (!handle.trim()) return setError("Enter your Instagram profile or @username.");
     if (!lookup.exists && !categorySlug) return setError("Choose a category.");
     if (belowMin) return setError(`The minimum total is ${formatMoney(minCents, currency)}.`);
@@ -209,23 +210,6 @@ export function ClaimForm({
       setError("Network error. Please try again.");
       setSubmitting(false);
     }
-  }
-
-  if (closed) {
-    return (
-      <section id="claim" className="relative scroll-mt-6">
-        <div className="mx-auto max-w-lg rounded-3xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
-          <div className="brand-gradient-bg mx-auto flex size-12 items-center justify-center rounded-2xl text-2xl">
-            🚀
-          </div>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Launching soon</h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-            New listings are paused while we get everything ready. Check back shortly to claim
-            your rank.
-          </p>
-        </div>
-      </section>
-    );
   }
 
   return (

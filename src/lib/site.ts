@@ -43,11 +43,11 @@ export const SOCIAL_LINKS: { href: string; label: string }[] = [
 export const TEST_MODE_BANNER_ENABLED = true;
 
 /**
- * Full-screen "try now" popup — disabled while new listings are paused
- * (its whole CTA is claiming a rank, which is closed right now). Flip back
- * on once listings reopen.
+ * Full-screen "launching soon" popup, shown briefly on load while the claim
+ * form stays visible/interactive-looking behind it. Flip to false (or
+ * delete <LaunchingSoonPopup/> from layout.tsx) once listings reopen.
  */
-export const TRY_NOW_POPUP_ENABLED = false;
+export const LAUNCHING_SOON_POPUP_ENABLED = true;
 
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
