@@ -16,6 +16,14 @@ export function IconTag({ className, ...p }: P) {
   );
 }
 
+export function IconHeart({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className ?? base} {...p}>
+      <path d="M12 20.5s-7.4-4.6-10-9.1C.5 8.2 2 4.8 5.4 4.1c2-.4 4 .5 5.1 2.1a1 1 0 0 0 1.6 0c1.1-1.6 3.1-2.5 5.1-2.1 3.4.7 4.9 4.1 3.4 7.3-2.6 4.5-10 9.1-10 9.1Z" />
+    </svg>
+  );
+}
+
 export function IconGrid({ className, ...p }: P) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className ?? base} {...p}>

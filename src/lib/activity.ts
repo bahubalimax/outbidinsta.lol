@@ -37,11 +37,39 @@ export async function recordActivity(
   });
 }
 
-async function getRecentActivityUncached(limit: number) {
-  return prisma.activityEvent.findMany({
+export interface RecentActivityItem {
+  id: string;
+  type: ActivityType;
+  listingId: string;
+  username: string;
+  categorySlug: string | null;
+  rank: number | null;
+  amountCents: number | null;
+  totalCents: number | null;
+  currency: string;
+  /** ISO string, not a Date — this return value round-trips through Next's
+   * data cache (JSON), which would otherwise silently turn Date objects into
+   * plain strings and break any caller doing `.createdAt.toISOString()`. */
+  createdAt: string;
+}
+
+async function getRecentActivityUncached(limit: number): Promise<RecentActivityItem[]> {
+  const rows = await prisma.activityEvent.findMany({
     orderBy: { createdAt: "desc" },
     take: Math.min(Math.max(limit, 1), 100),
   });
+  return rows.map((r) => ({
+    id: r.id,
+    type: r.type,
+    listingId: r.listingId,
+    username: r.username,
+    categorySlug: r.categorySlug,
+    rank: r.rank,
+    amountCents: r.amountCents,
+    totalCents: r.totalCents,
+    currency: r.currency,
+    createdAt: r.createdAt.toISOString(),
+  }));
 }
 
 const cachedRecentActivity = unstable_cache(getRecentActivityUncached, ["recent-activity"], {
@@ -49,6 +77,6 @@ const cachedRecentActivity = unstable_cache(getRecentActivityUncached, ["recent-
   tags: ["board"],
 });
 
-export function getRecentActivity(limit = 25) {
+export function getRecentActivity(limit = 25): Promise<RecentActivityItem[]> {
   return cachedRecentActivity(limit);
 }

@@ -4,6 +4,7 @@ import { PRIMARY_NAV } from "@/lib/site";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CategoryStrip } from "@/components/category-strip";
 import { LiveVisitorPill } from "@/components/live-visitor-pill";
+import { Logo } from "@/components/logo";
 
 export function SiteHeader({
   categories,
@@ -17,16 +18,9 @@ export function SiteHeader({
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               href="/"
-              className="inline-flex shrink-0 items-center gap-1.5 text-[22px] font-semibold tracking-[-0.04em]"
+              className="inline-flex shrink-0 items-center text-[20px] font-semibold tracking-[-0.03em] sm:text-[22px]"
             >
-              <svg viewBox="0 0 36 28" fill="none" aria-hidden className="h-[1em] w-auto">
-                <rect x="22" y="0" width="14" height="6" rx="3" className="fill-primary" />
-                <rect x="12" y="11" width="24" height="6" rx="3" className="fill-foreground" />
-                <rect x="0" y="22" width="36" height="6" rx="3" className="fill-foreground" />
-              </svg>
-              <span>
-                OutBid<span className="text-primary">Insta</span>
-              </span>
+              <Logo />
             </Link>
             <div className="hidden min-w-0 md:block">
               <LiveVisitorPill />

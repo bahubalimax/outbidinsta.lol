@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
           amountCents: e.amountCents,
           totalCents: e.totalCents,
           currency: e.currency,
-          createdAt: e.createdAt.toISOString(),
+          createdAt: e.createdAt,
         })),
       },
       { headers: { "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30" } },

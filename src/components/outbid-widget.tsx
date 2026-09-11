@@ -136,7 +136,7 @@ export function OutbidWidget({
       <button
         type="submit"
         disabled={submitting}
-        className="mt-3 h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
+        className="brand-gradient-bg mt-3 h-11 w-full rounded-full text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {submitting
           ? "Starting checkout…"

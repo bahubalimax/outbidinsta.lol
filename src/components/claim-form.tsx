@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Alert, cn } from "@/components/ui";
-import { IconInstagram } from "@/components/icons";
+import { IconInstagram, IconHeart } from "@/components/icons";
 import { formatMoney, minorToMajor } from "@/lib/money";
 
 interface CategoryOption {
@@ -201,7 +201,22 @@ export function ClaimForm({
   }
 
   return (
-    <section id="claim" className="scroll-mt-6">
+    <section id="claim" className="relative scroll-mt-6">
+      <span
+        aria-hidden
+        className="obi-float absolute top-0 left-[6%] hidden size-9 items-center justify-center rounded-2xl bg-white text-[#e1306c] shadow-md ring-1 ring-black/5 md:flex"
+        style={{ "--obi-float-rot": "-8deg" } as CSSProperties}
+      >
+        <IconHeart className="size-4.5" />
+      </span>
+      <span
+        aria-hidden
+        className="obi-float-slow brand-gradient-bg absolute top-2 right-[8%] hidden size-9 items-center justify-center rounded-2xl text-white shadow-md md:flex"
+        style={{ "--obi-float-rot": "7deg" } as CSSProperties}
+      >
+        <IconInstagram className="size-4.5" />
+      </span>
+
       <h2 className="mx-auto max-w-4xl text-center text-[28px] font-semibold tracking-[-0.03em] text-pretty md:text-[40px]">
         <span>Claim #1 for</span>{" "}
         <span className="inline-flex items-center gap-2 align-middle whitespace-nowrap">
@@ -214,20 +229,22 @@ export function ClaimForm({
           >
             <span className="text-sm leading-none">−</span>
           </button>
-          <label className="relative inline-block text-primary underline decoration-dashed decoration-2 underline-offset-[6px]">
+          <label className="relative inline-block underline decoration-dashed decoration-2 underline-offset-[6px] [text-decoration-color:var(--primary)]">
             <span className="sr-only">Bid amount in dollars</span>
             <span className="invisible whitespace-nowrap tabular-nums" aria-hidden>
               ${dollars}
             </span>
             <span className="absolute inset-0 flex items-baseline">
-              <span aria-hidden>$</span>
+              <span className="brand-gradient-text" aria-hidden>
+                $
+              </span>
               <input
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={String(dollars)}
                 onChange={(e) => onType(e.target.value)}
-                className="w-full min-w-0 bg-transparent p-0 font-[inherit] tracking-[inherit] tabular-nums outline-none"
+                className="brand-gradient-text w-full min-w-0 bg-transparent p-0 font-[inherit] tracking-[inherit] tabular-nums outline-none"
               />
             </span>
           </label>
@@ -292,7 +309,7 @@ export function ClaimForm({
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-50 md:w-auto"
+            className="brand-gradient-bg inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 md:w-auto"
           >
             {submitting
               ? "Starting…"

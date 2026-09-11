@@ -26,7 +26,7 @@ export function BoardTabs({ active }: { active: Board }) {
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold leading-none tracking-tight transition-colors",
               active === t.key
-                ? "bg-primary text-primary-foreground"
+                ? "brand-gradient-bg text-white"
                 : "text-primary hover:bg-background/70 hover:text-primary/80",
             )}
           >

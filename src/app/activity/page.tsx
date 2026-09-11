@@ -20,7 +20,7 @@ export default async function ActivityPage() {
     amountCents: e.amountCents,
     totalCents: e.totalCents,
     currency: e.currency,
-    createdAt: e.createdAt.toISOString(),
+    createdAt: e.createdAt,
   }));
 
   return (

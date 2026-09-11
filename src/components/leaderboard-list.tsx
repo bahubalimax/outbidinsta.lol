@@ -79,7 +79,7 @@ function ClaimPill({ row, edge }: { row: LeaderboardRow; edge: "center" | "top" 
   return (
     <span
       className={cn(
-        "pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-primary-foreground opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100",
+        "brand-gradient-bg pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100",
         edge === "center" ? "top-0 -translate-y-1/2" : "top-1.5",
       )}
     >

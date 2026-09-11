@@ -24,6 +24,10 @@
   --success: #009f31;
   --warning: #b7791f;
   --radius: 0.875rem;
+  /* Instagram-style brand gradient — an original multi-stop gradient (not
+     Meta's asset), used sparingly on primary CTAs, the wordmark, and small
+     decorative accents. Everything else stays on the flat --primary token. */
+  --gradient-brand: linear-gradient(135deg, #6a3df5 0%, #e1306c 55%, #f9a13b 100%);
 }
 
 .dark {
@@ -152,6 +156,34 @@ body {
 }
 .obi-pulse {
   animation: obi-pulse 2s ease-in-out infinite;
+}
+
+.brand-gradient-bg {
+  background-image: var(--gradient-brand);
+}
+
+.brand-gradient-text {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes obi-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--obi-float-rot, -6deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(var(--obi-float-rot, -6deg));
+  }
+}
+.obi-float {
+  animation: obi-float 4s ease-in-out infinite;
+}
+.obi-float-slow {
+  animation: obi-float 5.5s ease-in-out infinite;
+  animation-delay: -1.5s;
 }
 
 @media (prefers-reduced-motion: reduce) {

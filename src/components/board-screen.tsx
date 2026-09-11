@@ -65,7 +65,7 @@ export async function BoardScreen({
     amountCents: e.amountCents,
     totalCents: e.totalCents,
     currency: e.currency,
-    createdAt: e.createdAt.toISOString(),
+    createdAt: e.createdAt,
   }));
 
   const rows = result.rows;
