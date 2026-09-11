@@ -252,24 +252,3 @@ export const getPublicCountryBreakdown = unstable_cache(
   { revalidate: 300 },
 );
 
-export interface LabeledStat {
-  label: string;
-  count: number;
-}
-
-/** Public, all-time browser breakdown. */
-const getPublicBrowserBreakdownUncached = async (): Promise<LabeledStat[]> => {
-  const rows = await prisma.pageView.groupBy({
-    by: ["browser"],
-    _count: { browser: true },
-    orderBy: { _count: { browser: "desc" } },
-    take: 8,
-  });
-  return rows.map((r) => ({ label: r.browser ?? "Other", count: r._count.browser }));
-};
-
-export const getPublicBrowserBreakdown = unstable_cache(
-  getPublicBrowserBreakdownUncached,
-  ["public-browser-breakdown"],
-  { revalidate: 300 },
-);
