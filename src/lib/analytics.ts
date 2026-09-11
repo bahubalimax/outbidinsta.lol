@@ -16,6 +16,24 @@ export interface TrackInput {
   country?: string | null;
 }
 
+/**
+ * Known non-visitor noise, not real people: Dodo's own checkout/fraud-check
+ * domains bouncing back to us mid-payment, and local dev testing writing into
+ * this same shared database. Excluded from every visitor count and
+ * breakdown below — every number here is a promise of "real, not fabricated."
+ */
+const EXCLUDED_REFERRERS = [
+  "test.checkout.dodopayments.com",
+  "sentinal-v2.dodopayments.com",
+  "localhost",
+];
+// Prisma's `notIn` on a nullable column excludes NULL rows too (verified —
+// it is NOT "keep nulls, drop the named values"), which would have silently
+// wiped out all "Direct" (no-referrer) traffic. Spell it out explicitly.
+const REAL_TRAFFIC: { OR: ({ referrer: null } | { referrer: { notIn: string[] } })[] } = {
+  OR: [{ referrer: null }, { referrer: { notIn: EXCLUDED_REFERRERS } }],
+};
+
 /** Coarse User-Agent parse — just enough to bucket a browser breakdown. */
 export function parseUserAgent(ua: string | null | undefined): {
   browser: string;
@@ -79,39 +97,39 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
 
   const [pageviews24h, pageviews7d, topPagesRaw, topReferrersRaw, browsersRaw, countriesRaw, recentRows] =
     await Promise.all([
-      prisma.pageView.count({ where: { createdAt: { gte: since24h } } }),
-      prisma.pageView.count({ where: { createdAt: { gte: since7d } } }),
+      prisma.pageView.count({ where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC } }),
+      prisma.pageView.count({ where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC } }),
       prisma.pageView.groupBy({
         by: ["path"],
-        where: { createdAt: { gte: since7d } },
+        where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC },
         _count: { path: true },
         orderBy: { _count: { path: "desc" } },
         take: 10,
       }),
       prisma.pageView.groupBy({
         by: ["referrer"],
-        where: { createdAt: { gte: since7d }, referrer: { not: null } },
+        where: { createdAt: { gte: since7d }, referrer: { not: null, notIn: EXCLUDED_REFERRERS } },
         _count: { referrer: true },
         orderBy: { _count: { referrer: "desc" } },
         take: 10,
       }),
       prisma.pageView.groupBy({
         by: ["browser"],
-        where: { createdAt: { gte: since7d } },
+        where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC },
         _count: { browser: true },
         orderBy: { _count: { browser: "desc" } },
         take: 10,
       }),
       prisma.pageView.groupBy({
         by: ["country"],
-        where: { createdAt: { gte: since7d }, country: { not: null } },
+        where: { createdAt: { gte: since7d }, country: { not: null }, ...REAL_TRAFFIC },
         _count: { country: true },
         orderBy: { _count: { country: "desc" } },
         take: 10,
       }),
       // Bucketed in JS below — simple and fine at this traffic scale.
       prisma.pageView.findMany({
-        where: { createdAt: { gte: since24h } },
+        where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC },
         select: { createdAt: true },
       }),
     ]);
@@ -159,7 +177,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
  */
 const getActiveNowUncached = async (): Promise<number> => {
   const since = new Date(Date.now() - 5 * 60 * 1000);
-  return prisma.pageView.count({ where: { createdAt: { gte: since } } });
+  return prisma.pageView.count({ where: { createdAt: { gte: since }, ...REAL_TRAFFIC } });
 };
 
 export const getActiveNow = unstable_cache(getActiveNowUncached, ["active-now"], {
@@ -187,9 +205,9 @@ const getHeaderStatsUncached = async (): Promise<HeaderStats> => {
   const since5m = new Date(Date.now() - 5 * 60 * 1000);
   const { start: todayStart } = utcDayRange();
   const [activeNow, visitorsToday, visitorsAllTime] = await Promise.all([
-    prisma.pageView.count({ where: { createdAt: { gte: since5m } } }),
-    prisma.pageView.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.pageView.count(),
+    prisma.pageView.count({ where: { createdAt: { gte: since5m }, ...REAL_TRAFFIC } }),
+    prisma.pageView.count({ where: { createdAt: { gte: todayStart }, ...REAL_TRAFFIC } }),
+    prisma.pageView.count({ where: REAL_TRAFFIC }),
   ]);
   return { activeNow, visitorsToday, visitorsAllTime };
 };
@@ -207,7 +225,7 @@ export interface CountryStat {
 const getPublicCountryBreakdownUncached = async (): Promise<CountryStat[]> => {
   const rows = await prisma.pageView.groupBy({
     by: ["country"],
-    where: { country: { not: null } },
+    where: { country: { not: null }, ...REAL_TRAFFIC },
     _count: { country: true },
     orderBy: { _count: { country: "desc" } },
     take: 8,
@@ -230,6 +248,7 @@ export interface LabeledStat {
 const getPublicReferrerBreakdownUncached = async (): Promise<LabeledStat[]> => {
   const rows = await prisma.pageView.groupBy({
     by: ["referrer"],
+    where: REAL_TRAFFIC,
     _count: { referrer: true },
     orderBy: { _count: { referrer: "desc" } },
     take: 8,

@@ -10,6 +10,7 @@ import {
 } from "@/lib/leaderboard";
 import { TopSidebar } from "@/components/top-sidebar";
 import { DailyResetCountdown } from "@/components/daily-reset-countdown";
+import { getHeaderStats } from "@/lib/analytics";
 import { getRecentActivity } from "@/lib/activity";
 import { recentDayKeys, utcDateKey } from "@/lib/date-windows";
 import { ClaimForm } from "@/components/claim-form";
@@ -196,16 +197,14 @@ export async function BoardScreen({
       {board === "all" && isPage1 && (
         <>
           <section className="mt-4 flex w-full justify-center">
-            <div className="flex w-full max-w-3xl flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <p className="min-w-0 text-base leading-snug text-muted-foreground sm:flex-1 sm:text-lg">
-                A public, pay-to-rank leaderboard for Instagram profiles.{" "}
-                <Link href="/how-it-works" className="font-medium text-primary hover:text-primary/80">
-                  How it works →
-                </Link>
-              </p>
-              <HomeStats currency={settings.currency} />
-            </div>
+            <p className="max-w-2xl text-center text-base leading-snug text-muted-foreground sm:text-lg">
+              A public, pay-to-rank leaderboard for Instagram profiles.{" "}
+              <Link href="/how-it-works" className="font-medium text-primary hover:text-primary/80">
+                How it works →
+              </Link>
+            </p>
           </section>
+          <ProjectStats currency={settings.currency} />
           <p className="text-center text-xs text-muted-foreground">{AFFILIATION_DISCLAIMER}</p>
         </>
       )}
@@ -219,16 +218,21 @@ export async function BoardScreen({
   );
 }
 
-async function HomeStats({ currency }: { currency: string }) {
-  const [revenueAgg, activeCount] = await Promise.all([
+async function ProjectStats({ currency }: { currency: string }) {
+  const [headerStats, revenueAgg, totalListings] = await Promise.all([
+    getHeaderStats(),
     prisma.payment.aggregate({ _sum: { amountCents: true }, where: { status: "paid" } }),
-    prisma.listing.count({ where: { status: "ACTIVE" } }),
+    prisma.listing.count(),
   ]);
   return (
-    <div className="grid w-full grid-cols-2 gap-3 sm:w-[min(100%,22rem)] sm:shrink-0">
-      <Stat value={formatMoney(revenueAgg._sum.amountCents ?? 0, currency)} label="confirmed bids value" />
-      <Stat value={String(activeCount)} label="profiles ranked" />
-    </div>
+    <section className="mt-6 flex flex-col items-center gap-3">
+      <p className="text-sm text-muted-foreground">Some real numbers about this project so far.</p>
+      <div className="grid w-full max-w-lg grid-cols-3 gap-3">
+        <Stat value={headerStats.visitorsAllTime.toLocaleString()} label="visitors" />
+        <Stat value={formatMoney(revenueAgg._sum.amountCents ?? 0, currency)} label="revenue" />
+        <Stat value={totalListings.toLocaleString()} label="products added" />
+      </div>
+    </section>
   );
 }
 
