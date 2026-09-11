@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
-import { getBoard, getTodayBoard, getActiveCategoriesForForm, type BoardKind } from "@/lib/leaderboard";
+import {
+  getBoard,
+  getTodayBoard,
+  getAllTimeBoard,
+  getActiveCategoriesForForm,
+  type BoardKind,
+} from "@/lib/leaderboard";
+import { TopSidebar } from "@/components/top-sidebar";
 import { getRecentActivity } from "@/lib/activity";
 import { recentDayKeys, utcDateKey } from "@/lib/date-windows";
 import { ClaimForm } from "@/components/claim-form";
@@ -48,12 +55,16 @@ export async function BoardScreen({
 }) {
   const pageSize = 25;
   const settings = await getSettings();
+  const isPage1 = page === 1 && !categorySlug;
 
-  const [result, formCategories, activity, today] = await Promise.all([
+  const [result, formCategories, activity, today, top10] = await Promise.all([
     getBoard(board, { categorySlug, page, pageSize, dateKey }),
     getActiveCategoriesForForm(),
     getRecentActivity(5),
     board === "all" ? getTodayBoard({ pageSize: 3 }) : Promise.resolve(null),
+    // Quick-glance all-time reference panel next to the claim form —
+    // independent of whichever board this page itself is showing.
+    isPage1 ? getAllTimeBoard({ pageSize: 10 }) : Promise.resolve(null),
   ]);
 
   const activityItems: ActivityItem[] = activity.map((e) => ({
@@ -69,7 +80,6 @@ export async function BoardScreen({
   }));
 
   const rows = result.rows;
-  const isPage1 = page === 1 && !categorySlug;
   const homeLike = board === "all";
 
   const mkHref = (patch: Record<string, string | undefined>) => {
@@ -97,13 +107,16 @@ export async function BoardScreen({
         <BoardTabs active={board} showDaily={settings.dailyBoardEnabled} />
 
         {isPage1 && (
-          <ClaimForm
-            categories={formCategories}
-            claimTopCents={result.claimTopCents}
-            startingBidCents={settings.startingBidCents}
-            minIncrementCents={settings.minIncrementCents}
-            currency={settings.currency}
-          />
+          <div className={cn(top10 && top10.rows.length > 0 && "lg:grid lg:grid-cols-[1fr_280px] lg:items-start lg:gap-6")}>
+            <ClaimForm
+              categories={formCategories}
+              claimTopCents={result.claimTopCents}
+              startingBidCents={settings.startingBidCents}
+              minIncrementCents={settings.minIncrementCents}
+              currency={settings.currency}
+            />
+            {top10 && <TopSidebar rows={top10.rows} className="mt-6 lg:mt-0" />}
+          </div>
         )}
 
         <p className="mx-auto max-w-xl text-center text-xs leading-normal text-muted-foreground text-balance">

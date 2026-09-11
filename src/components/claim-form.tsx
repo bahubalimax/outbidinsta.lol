@@ -260,8 +260,8 @@ export function ClaimForm({
       </h2>
 
       <form onSubmit={onSubmit} className="mx-auto mt-3 flex w-full max-w-4xl flex-col gap-2">
-        <div className="mx-auto flex w-[92%] flex-col items-stretch gap-2.5 md:w-full md:flex-row md:items-center md:gap-3">
-          <div className="relative min-w-0 flex-1">
+        <div className="mx-auto flex w-[92%] flex-col items-stretch gap-2.5 md:w-full md:flex-row md:flex-wrap md:items-center md:gap-3">
+          <div className="relative min-w-0 flex-1 md:min-w-[240px]">
             <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
               <IconInstagram className="size-4" />
             </span>
@@ -277,7 +277,7 @@ export function ClaimForm({
             />
           </div>
 
-          <div className="min-w-0 md:w-56">
+          <div className="min-w-0 md:w-56 md:shrink-0">
             <select
               value={categorySlug}
               onChange={(e) => setCategorySlug(e.target.value)}
@@ -303,7 +303,7 @@ export function ClaimForm({
             placeholder="Email for receipt"
             autoComplete="email"
             aria-label="Email address"
-            className="h-11 w-full min-w-0 rounded-xl border border-input bg-popover px-3.5 text-base placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none md:w-44"
+            className="h-11 w-full min-w-0 shrink-0 rounded-xl border border-input bg-popover px-3.5 text-base placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none md:w-44"
           />
 
           <button
