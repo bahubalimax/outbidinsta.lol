@@ -7,7 +7,7 @@ import { IconInstagram, IconTag, IconChevronRight } from "@/components/icons";
 import { RankBadge } from "@/components/rank-badge";
 
 const TIER_BG = ["bg-primary/[0.14]", "bg-primary/[0.08]", "bg-primary/[0.04]"] as const;
-const TIER_AVATAR = ["size-14 md:size-[4.5rem]", "size-12 md:size-16", "size-10 md:size-14"] as const;
+const TIER_AVATAR = ["size-11 md:size-12", "size-10 md:size-11", "size-9 md:size-10"] as const;
 
 function Avatar({
   username,
@@ -106,12 +106,12 @@ function TierRow({ row, tier }: { row: LeaderboardRow; tier: 0 | 1 | 2 }) {
         <RowLink username={row.username} />
         <div
           className={cn(
-            "pointer-events-none relative z-10 overflow-hidden rounded-xl md:rounded-2xl",
+            "pointer-events-none relative z-10 overflow-hidden rounded-lg md:rounded-xl",
             TIER_BG[tier],
           )}
         >
-          <div className="flex items-start gap-2 px-3 py-3 md:gap-3 md:px-4 md:py-4">
-            <div className="flex shrink-0 items-center md:gap-3">
+          <div className="flex items-start gap-2 px-2.5 py-2 md:gap-2.5 md:px-3 md:py-2.5">
+            <div className="flex shrink-0 items-center md:gap-2.5">
               <span className="relative hidden md:inline-flex">
                 {row.rank === 1 && (
                   <span className="obi-pulse absolute inset-0 rounded-lg bg-amber-400/30" aria-hidden />
@@ -122,15 +122,15 @@ function TierRow({ row, tier }: { row: LeaderboardRow; tier: 0 | 1 | 2 }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-2">
-                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground md:text-base">
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
                   <RankBadge rank={row.rank} className="mr-1.5 h-6 min-w-6 text-xs md:hidden" />
                   {row.displayName ? `${row.displayName} · @${row.username}` : `@${row.username}`}
                 </p>
-                <p className="shrink-0 text-sm font-semibold text-primary tabular-nums md:text-base">
+                <p className="shrink-0 text-sm font-semibold text-primary tabular-nums">
                   {formatMoney(row.spendCents, row.currency)}
                 </p>
               </div>
-              <p className="line-clamp-1 text-xs text-muted-foreground/70 md:text-sm">
+              <p className="line-clamp-1 text-xs text-muted-foreground/70">
                 {row.bio ??
                   `Ranked #${row.rank} in ${row.categoryName}. Claim this rank for ${formatMoney(
                     row.claimHereCents,
@@ -156,26 +156,26 @@ function FlatRow({ row, first }: { row: LeaderboardRow; first?: boolean }) {
       )}
     >
       <RowLink username={row.username} />
-      <div className="pointer-events-none relative z-10 flex items-start gap-2 py-3 transition-colors group-hover:text-primary md:gap-3 md:py-4">
-        <div className="flex shrink-0 items-center md:gap-3">
-          <span className="hidden min-w-10 items-center justify-center text-base font-medium text-muted-foreground tabular-nums md:inline-flex">
+      <div className="pointer-events-none relative z-10 flex items-start gap-2 py-2 transition-colors group-hover:text-primary md:gap-2.5 md:py-2.5">
+        <div className="flex shrink-0 items-center md:gap-2.5">
+          <span className="hidden min-w-8 items-center justify-center text-sm font-medium text-muted-foreground tabular-nums md:inline-flex">
             #{row.rank}
           </span>
-          <Avatar username={row.username} src={row.avatarUrl} className="size-10 md:size-14" />
+          <Avatar username={row.username} src={row.avatarUrl} className="size-8 md:size-10" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <p className="min-w-0 flex-1 truncate text-sm font-medium md:text-base">
+            <p className="min-w-0 flex-1 truncate text-sm font-medium">
               <span className="mr-1.5 font-medium text-muted-foreground tabular-nums md:hidden">
                 #{row.rank}
               </span>
               {row.displayName ? `${row.displayName} · @${row.username}` : `@${row.username}`}
             </p>
-            <p className="shrink-0 text-sm font-semibold text-primary tabular-nums md:text-base">
+            <p className="shrink-0 text-sm font-semibold text-primary tabular-nums">
               {formatMoney(row.spendCents, row.currency)}
             </p>
           </div>
-          <p className="line-clamp-1 text-xs text-muted-foreground/70 md:text-sm">
+          <p className="line-clamp-1 text-xs text-muted-foreground/70">
             {row.bio ?? `Ranked #${row.rank} in ${row.categoryName}.`}
           </p>
           <MetaRow row={row} />
@@ -188,7 +188,7 @@ function FlatRow({ row, first }: { row: LeaderboardRow; first?: boolean }) {
 
 export function TierList({ rows }: { rows: LeaderboardRow[] }) {
   return (
-    <ol className="flex flex-col gap-3 pt-1 md:pt-2">
+    <ol className="flex flex-col gap-2 pt-1 md:pt-1.5">
       {rows.map((row, i) => (
         <TierRow key={row.id} row={row} tier={Math.min(i, 2) as 0 | 1 | 2} />
       ))}

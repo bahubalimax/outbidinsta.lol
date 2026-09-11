@@ -30,8 +30,8 @@ export function TestModeTicker() {
 
   const message =
     msLeft === null
-      ? "Test mode — real payments go live soon. No real money is charged yet."
-      : `Test mode — real payments go live in ${formatCountdown(msLeft)}. No real money is charged yet.`;
+      ? "Test mode — try it now, no real charges yet. Real payments go live soon!"
+      : `Test mode — try it now, no real charges yet. Real payments go live in ${formatCountdown(msLeft)}!`;
 
   return (
     <div className="brand-gradient-bg overflow-hidden py-1.5 text-white">

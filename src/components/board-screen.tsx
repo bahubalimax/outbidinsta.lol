@@ -115,7 +115,7 @@ export async function BoardScreen({
               minIncrementCents={settings.minIncrementCents}
               currency={settings.currency}
             />
-            {top10 && <TopSidebar rows={top10.rows} className="mt-6 lg:mt-0" />}
+            {top10 && <TopSidebar rows={top10.rows} className="mt-6 lg:mt-0 lg:translate-y-[267px]" />}
           </div>
         )}
 
