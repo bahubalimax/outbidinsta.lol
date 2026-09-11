@@ -45,7 +45,6 @@ export function ClaimForm({
 }: ClaimFormProps) {
   const [handle, setHandle] = useState(prefillHandle ?? "");
   const [categorySlug, setCategorySlug] = useState("");
-  const [email, setEmail] = useState("");
   const [targetCents, setTargetCents] = useState(prefillTargetCents ?? claimTopCents);
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -158,7 +157,6 @@ export function ClaimForm({
     setError(null);
     if (!handle.trim()) return setError("Enter your Instagram profile or @username.");
     if (!lookup.exists && !categorySlug) return setError("Choose a category.");
-    if (!email.trim()) return setError("Enter your email for the receipt.");
     if (belowMin) return setError(`The minimum total is ${formatMoney(minCents, currency)}.`);
 
     setSubmitting(true);
@@ -171,14 +169,12 @@ export function ClaimForm({
             ? {
                 listingId: lookup.listingId,
                 amount: String(minorToMajor(targetCents, currency)),
-                email,
                 intendedTop: true,
               }
             : {
                 instagram: handle,
                 categorySlug,
                 amount: String(minorToMajor(targetCents, currency)),
-                email,
                 intendedTop: true,
               },
         ),
@@ -296,20 +292,10 @@ export function ClaimForm({
             </select>
           </div>
 
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email for receipt"
-            autoComplete="email"
-            aria-label="Email address"
-            className="h-11 w-full min-w-0 shrink-0 rounded-xl border border-input bg-popover px-3.5 text-base placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none md:w-44"
-          />
-
           <button
             type="submit"
             disabled={submitting}
-            className="brand-gradient-bg inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 md:w-auto"
+            className="brand-gradient-bg inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full px-5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 md:w-44"
           >
             {submitting
               ? "Starting…"

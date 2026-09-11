@@ -26,7 +26,8 @@ export interface CreateBidCheckoutInput {
   /** minor units (e.g. cents) — the pay-what-you-want amount for the bid */
   amountCents: number;
   currency: string;
-  email: string;
+  /** Omitted for guest bids — Dodo's own hosted checkout collects it instead. */
+  email?: string;
   listingId: string;
   bidId: string;
   userId: string;
@@ -60,7 +61,7 @@ export async function createBidCheckout(input: CreateBidCheckoutInput): Promise<
         amount: input.amountCents,
       },
     ],
-    customer: { email: input.email },
+    customer: input.email ? { email: input.email } : null,
     return_url: returnUrl,
     cancel_url: cancelUrl,
     metadata: {

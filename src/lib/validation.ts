@@ -23,7 +23,9 @@ export const createBidSchema = z
     instagram: z.string().trim().min(1).max(300).optional(),
     categorySlug: slug.optional(),
     amount: z.union([z.string(), z.number()]).transform((v) => String(v)),
-    email: emailSchema,
+    // Optional — Dodo's own hosted checkout collects the paying email; we
+    // don't need to ask twice. See src/lib/bids.ts for the guest fallback.
+    email: emailSchema.optional(),
     intendedTop: z.boolean().optional(),
   })
   .refine((d) => d.listingId || (d.instagram && d.categorySlug), {

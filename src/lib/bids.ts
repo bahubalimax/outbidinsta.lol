@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getSettings, toBiddingRules } from "@/lib/settings";
@@ -30,7 +31,8 @@ export interface CreateBidIntentInput {
   categorySlug?: string;
   /** Target LIFETIME total (major units string, e.g. "17006"). */
   amountRaw: string;
-  email: string;
+  /** Optional — Dodo's own hosted checkout collects the paying email instead. */
+  email?: string;
   intendedTop?: boolean;
 }
 
@@ -95,11 +97,16 @@ export async function createBidIntent(
     );
   }
 
-  const user = await prisma.user.upsert({
-    where: { email: input.email.toLowerCase() },
-    create: { email: input.email.toLowerCase() },
-    update: {},
-  });
+  // No email up front — Dodo's own hosted checkout collects it. Give the user
+  // row a unique placeholder; the webhook can reconcile the real address once
+  // Dodo reports it on payment.succeeded.
+  const user = input.email
+    ? await prisma.user.upsert({
+        where: { email: input.email.toLowerCase() },
+        create: { email: input.email.toLowerCase() },
+        update: {},
+      })
+    : await prisma.user.create({ data: { email: `guest-${randomUUID()}@outbidinsta.lol` } });
 
   const { bid, payment } = await prisma.$transaction(async (tx) => {
     const bid = await tx.bid.create({
@@ -138,7 +145,7 @@ export async function createBidIntent(
     const checkout = await createBidCheckout({
       amountCents: chargeCents,
       currency: listing.currency,
-      email: input.email.toLowerCase(),
+      email: input.email?.toLowerCase(),
       listingId: listing.id,
       bidId: bid.id,
       userId: user.id,
