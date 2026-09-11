@@ -35,6 +35,16 @@ export const SOCIAL_LINKS: { href: string; label: string }[] = [
   { href: "https://x.com/outbidinsta", label: "X (Twitter)" },
 ];
 
+/**
+ * Test-mode notice banner. Payments currently run through Dodo's test
+ * environment while our merchant verification is pending. Flip
+ * TEST_MODE_BANNER_ENABLED to false (or just delete <TestModeTicker/> from
+ * layout.tsx) once verification clears and DODO_ENVIRONMENT flips to
+ * live_mode — no need to touch this ETA after that.
+ */
+export const TEST_MODE_BANNER_ENABLED = true;
+export const TEST_MODE_LIVE_ETA = "2026-09-13T17:00:00.000Z";
+
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }

@@ -5,9 +5,10 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ThemeScript } from "@/components/theme-toggle";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
+import { TestModeTicker } from "@/components/test-mode-ticker";
 import { getActiveCategoriesForForm } from "@/lib/leaderboard";
 import { getHeaderStats } from "@/lib/analytics";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL, TEST_MODE_BANNER_ENABLED } from "@/lib/site";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -75,6 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeScript />
       </head>
       <body className="flex min-h-dvh flex-col">
+        {TEST_MODE_BANNER_ENABLED && <TestModeTicker />}
         <SiteHeader categories={categories} headerStats={headerStats} />
         <main className="w-full flex-1">{children}</main>
         <SiteFooter />

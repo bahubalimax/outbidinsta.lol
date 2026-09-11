@@ -186,6 +186,18 @@ body {
   animation-delay: -1.5s;
 }
 
+@keyframes obi-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.obi-marquee-track {
+  animation: obi-marquee 28s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
