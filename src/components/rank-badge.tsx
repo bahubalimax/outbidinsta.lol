@@ -53,7 +53,7 @@ export function Avatar({
   }
   return (
     <span
-      className="grid shrink-0 place-items-center rounded-full obi-gradient-bg font-bold text-white"
+      className="grid shrink-0 place-items-center rounded-full brand-gradient-bg font-bold text-white"
       style={{ width: size, height: size, fontSize: size * 0.4 }}
       aria-hidden
     >

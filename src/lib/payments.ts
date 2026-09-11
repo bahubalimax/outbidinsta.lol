@@ -156,18 +156,12 @@ export async function confirmBidPayment(input: ConfirmInput): Promise<ConfirmRes
     ]);
     const bid = await prisma.bid.findUnique({ where: { id: result.bidId! } });
 
-    // Avatar: prefer whatever the bidder supplied themselves (always wins —
-    // they chose to update it), otherwise best-effort backfill from a public
-    // Instagram lookup if the listing doesn't have one yet. Never blocks or
-    // fails the payment itself.
-    if (listing) {
-      const payment = await prisma.payment.findFirst({ where: { bidId: result.bidId! } });
-      const suppliedAvatarUrl =
-        typeof (payment?.metadata as Record<string, unknown> | null)?.avatarUrl === "string"
-          ? ((payment!.metadata as Record<string, unknown>).avatarUrl as string)
-          : null;
-      const avatarUrl =
-        suppliedAvatarUrl ?? (listing.avatarUrl ? null : await fetchInstagramAvatarUrl(result.username!));
+    // Best-effort real avatar backfill from the public Instagram profile —
+    // a listing's first confirmed bid is when it starts actually appearing
+    // sitewide, so this is the moment to fetch it. Never blocks or fails
+    // the payment itself; falls back to the initials avatar on any failure.
+    if (listing && !listing.avatarUrl) {
+      const avatarUrl = await fetchInstagramAvatarUrl(result.username!);
       if (avatarUrl) {
         await prisma.listing.update({ where: { id: result.listingId! }, data: { avatarUrl } }).catch(() => {});
       }

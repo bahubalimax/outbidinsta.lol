@@ -33,8 +33,6 @@ export interface CreateBidIntentInput {
   amountRaw: string;
   /** Optional — Dodo's own hosted checkout collects the paying email instead. */
   email?: string;
-  /** Optional — a self-supplied photo URL, applied to the listing once payment confirms. */
-  avatarUrl?: string;
   intendedTop?: boolean;
 }
 
@@ -136,7 +134,6 @@ export async function createBidIntent(
           username: listing.username,
           targetTotalCents,
           basedOnTotalCents: listing.totalCents,
-          ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
         },
       },
     });

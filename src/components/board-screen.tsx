@@ -116,6 +116,7 @@ export async function BoardScreen({
               startingBidCents={settings.startingBidCents}
               minIncrementCents={settings.minIncrementCents}
               currency={settings.currency}
+              closed={!settings.listingsEnabled || !settings.biddingEnabled}
             />
           )}
 
@@ -154,7 +155,9 @@ export async function BoardScreen({
             {rows.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
                 {board === "all"
-                  ? "No profiles ranked yet. Be the first — paste your @username above."
+                  ? settings.listingsEnabled && settings.biddingEnabled
+                    ? "No profiles ranked yet. Be the first — paste your @username above."
+                    : "No profiles ranked yet. Check back once listings open."
                   : "Nothing has been paid in this window yet."}
               </div>
             ) : homeLike && isPage1 ? (

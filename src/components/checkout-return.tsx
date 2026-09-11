@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Alert, Card } from "@/components/ui";
 import { ShareTicket } from "@/components/share-ticket";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { SITE_NAME } from "@/lib/site";
 
 interface Status {
@@ -29,6 +30,7 @@ export function CheckoutReturn({ bidId }: { bidId: string }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
+  const [avatarStepDone, setAvatarStepDone] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -88,6 +90,34 @@ export function CheckoutReturn({ bidId }: { bidId: string }) {
       status.globalRank === 1
         ? `I'm currently #1 on ${SITE_NAME} 🔥 Can you outbid me?`
         : `@${status.username} is #${status.globalRank ?? "—"} on ${SITE_NAME}. Outbid to take the top spot.`;
+
+    if (!avatarStepDone) {
+      const initial = status.username.replace(/[^a-z0-9]/gi, "").slice(0, 1).toUpperCase() || "?";
+      return (
+        <Card className="p-6 text-center">
+          <p className="text-3xl">🎉</p>
+          <p className="mt-2 text-lg font-semibold">Payment confirmed!</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose how @{status.username} shows up on the leaderboard.
+          </p>
+          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={() => setAvatarStepDone(true)}
+              className="flex flex-1 flex-col items-center gap-2 rounded-2xl border border-input px-5 py-4 transition-colors hover:bg-muted sm:flex-none sm:w-44"
+            >
+              <span className="brand-gradient-bg grid size-12 place-items-center rounded-full font-bold text-white">
+                {initial}
+              </span>
+              <span className="text-sm font-medium">Use initials</span>
+            </button>
+            <div className="flex flex-1 flex-col items-center gap-2 rounded-2xl border border-input px-5 py-4 sm:flex-none sm:w-44">
+              <AvatarUpload bidId={bidId} onUploaded={() => setAvatarStepDone(true)} />
+            </div>
+          </div>
+        </Card>
+      );
+    }
 
     return (
       <Card className="p-6 text-center">

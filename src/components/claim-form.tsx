@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { Alert, cn } from "@/components/ui";
 import { IconInstagram, IconHeart } from "@/components/icons";
 import { formatMoney, minorToMajor } from "@/lib/money";
+import { SITE_NAME } from "@/lib/site";
 
 interface CategoryOption {
   name: string;
@@ -32,6 +34,8 @@ export interface ClaimFormProps {
   currency: string;
   prefillHandle?: string;
   prefillTargetCents?: number;
+  /** New listings/bids are paused — show a closed notice instead of the form. */
+  closed?: boolean;
 }
 
 export function ClaimForm({
@@ -42,15 +46,16 @@ export function ClaimForm({
   currency,
   prefillHandle,
   prefillTargetCents,
+  closed = false,
 }: ClaimFormProps) {
   const [handle, setHandle] = useState(prefillHandle ?? "");
   const [categorySlug, setCategorySlug] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [showAvatarField, setShowAvatarField] = useState(false);
   const [targetCents, setTargetCents] = useState(prefillTargetCents ?? claimTopCents);
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const [lookup, setLookup] = useState<LookupState>({
     loading: false,
@@ -154,14 +159,20 @@ export function ClaimForm({
     return "";
   }, [lookup, handle, currency, startingBidCents, chargeCents, targetCents]);
 
-  async function onSubmit(e: React.FormEvent) {
+  function openConfirm(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!handle.trim()) return setError("Enter your Instagram profile or @username.");
     if (!lookup.exists && !categorySlug) return setError("Choose a category.");
     if (belowMin) return setError(`The minimum total is ${formatMoney(minCents, currency)}.`);
+    setAgreed(false);
+    setShowConfirm(true);
+  }
 
+  async function confirmAndCheckout() {
+    if (!agreed) return;
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/bids", {
         method: "POST",
@@ -171,14 +182,12 @@ export function ClaimForm({
             ? {
                 listingId: lookup.listingId,
                 amount: String(minorToMajor(targetCents, currency)),
-                avatarUrl: avatarUrl.trim() || undefined,
                 intendedTop: true,
               }
             : {
                 instagram: handle,
                 categorySlug,
                 amount: String(minorToMajor(targetCents, currency)),
-                avatarUrl: avatarUrl.trim() || undefined,
                 intendedTop: true,
               },
         ),
@@ -189,15 +198,34 @@ export function ClaimForm({
           setLookup((s) => ({ ...s, minTargetCents: data.details.minTargetCents, exists: true }));
           setTargetCents(data.details.minTargetCents);
         }
+        setShowConfirm(false);
         setError(data?.error ?? "Could not start checkout.");
         setSubmitting(false);
         return;
       }
       window.location.href = data.checkoutUrl;
     } catch {
+      setShowConfirm(false);
       setError("Network error. Please try again.");
       setSubmitting(false);
     }
+  }
+
+  if (closed) {
+    return (
+      <section id="claim" className="relative scroll-mt-6">
+        <div className="mx-auto max-w-lg rounded-3xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
+          <div className="brand-gradient-bg mx-auto flex size-12 items-center justify-center rounded-2xl text-2xl">
+            🚀
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Launching soon</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            New listings are paused while we get everything ready. Check back shortly to claim
+            your rank.
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -259,7 +287,7 @@ export function ClaimForm({
         </span>
       </h2>
 
-      <form onSubmit={onSubmit} className="mx-auto mt-3 flex w-full max-w-4xl flex-col gap-2">
+      <form onSubmit={openConfirm} className="mx-auto mt-3 flex w-full max-w-4xl flex-col gap-2">
         <div className="mx-auto flex w-[92%] flex-col items-stretch gap-2.5 md:w-full md:flex-row md:flex-wrap md:items-center md:gap-3">
           <div className="relative min-w-0 flex-1 md:min-w-[240px]">
             <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
@@ -307,28 +335,6 @@ export function ClaimForm({
           </button>
         </div>
 
-        <div className="mx-auto w-[92%] md:w-full">
-          {showAvatarField ? (
-            <input
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="Photo URL (optional) — shown on your leaderboard row & ticket"
-              autoComplete="off"
-              type="url"
-              aria-label="Photo URL"
-              className="h-10 w-full min-w-0 rounded-xl border border-input bg-popover px-3.5 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowAvatarField(true)}
-              className="text-xs font-medium text-muted-foreground underline decoration-dashed underline-offset-4 hover:text-foreground"
-            >
-              + Add a photo (optional)
-            </button>
-          )}
-        </div>
-
         {helper && (
           <p
             className={cn(
@@ -348,6 +354,89 @@ export function ClaimForm({
           Secure checkout. Your rank changes only after payment is confirmed.
         </p>
       </form>
+
+      {showConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm this rank"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={() => !submitting && setShowConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
+          >
+            <h2 className="text-xl font-semibold tracking-tight">Confirm this rank</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Check the details and agree to the Terms of Service to continue.
+            </p>
+
+            <div className="mt-4 flex items-center justify-between rounded-2xl bg-muted/60 px-4 py-3.5">
+              <div>
+                <p className="text-xs text-muted-foreground">Instagram</p>
+                <p className="font-semibold">@{lookup.username || handle.replace(/^@/, "")}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Due now</p>
+                <p className="font-semibold text-primary">
+                  {formatMoney(chargeCents || minCents, currency)}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              {lookup.categoryName ?? categories.find((c) => c.slug === categorySlug)?.name}. A
+              listing at that rank on the public board. It goes live once payment is confirmed —
+              someone else can still claim a higher rank first.
+            </p>
+
+            <label className="mt-4 flex items-start gap-2.5 rounded-xl border border-input px-3.5 py-3 text-sm">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-primary"
+              />
+              <span>
+                I have read and agree to the{" "}
+                <Link href="/terms" target="_blank" className="font-medium text-primary underline">
+                  Terms of Service
+                </Link>{" "}
+                of {SITE_NAME}
+              </span>
+            </label>
+
+            <div className="mt-1.5 flex gap-3 text-xs text-muted-foreground">
+              <Link href="/privacy" target="_blank" className="underline hover:text-foreground">
+                Privacy
+              </Link>
+              <Link href="/rules" target="_blank" className="underline hover:text-foreground">
+                Rules
+              </Link>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                disabled={submitting}
+                className="h-11 flex-1 rounded-full border border-input text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmAndCheckout}
+                disabled={!agreed || submitting}
+                className="brand-gradient-bg h-11 flex-1 rounded-full text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {submitting ? "Starting…" : "Continue to checkout"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

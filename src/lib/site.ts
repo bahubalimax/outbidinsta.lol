@@ -36,21 +36,18 @@ export const SOCIAL_LINKS: { href: string; label: string }[] = [
 ];
 
 /**
- * Test-mode notice banner. Payments currently run through Dodo's test
- * environment while our merchant verification is pending. Flip
- * TEST_MODE_BANNER_ENABLED to false (or just delete <TestModeTicker/> from
- * layout.tsx) once verification clears and DODO_ENVIRONMENT flips to
- * live_mode — no need to touch this ETA after that.
+ * "Launching soon" notice banner while new listings are paused ahead of
+ * launch. Flip TEST_MODE_BANNER_ENABLED to false (or delete
+ * <TestModeTicker/> from layout.tsx) once the site is open.
  */
 export const TEST_MODE_BANNER_ENABLED = true;
-export const TEST_MODE_LIVE_ETA = "2026-09-13T17:00:00.000Z";
 
 /**
- * Full-screen "try now, it costs nothing" popup. Same lifecycle as the
- * ticker above — flip TRY_NOW_POPUP_ENABLED to false (or delete
- * <TryNowPopup/> from layout.tsx) once real payments go live.
+ * Full-screen "try now" popup — disabled while new listings are paused
+ * (its whole CTA is claiming a rank, which is closed right now). Flip back
+ * on once listings reopen.
  */
-export const TRY_NOW_POPUP_ENABLED = true;
+export const TRY_NOW_POPUP_ENABLED = false;
 
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
