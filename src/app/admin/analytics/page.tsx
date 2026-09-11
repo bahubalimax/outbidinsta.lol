@@ -11,15 +11,18 @@ export default async function AdminAnalytics() {
       <div>
         <h1 className="text-xl font-semibold">Analytics</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Built in — pageviews from our own beacon, no third-party script. &ldquo;Visitors&rdquo;
-          here means pageviews, not deduped sessions.
+          Built in — pageviews from our own beacon, no third-party script. &ldquo;Pageviews&rdquo;
+          counts every hit; &ldquo;Unique visitors&rdquo; dedupes by a daily-rotating, non-reversible
+          fingerprint (IP + browser + day, hashed — never stored raw, never a cookie, resets every
+          UTC day).
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card label="Pageviews · 24h" value={summary.pageviews24h} />
         <Card label="Pageviews · 7d" value={summary.pageviews7d} />
-        <Card label="Visitors · 24h" value={summary.visitors24h} />
+        <Card label="Unique visitors · 24h" value={summary.uniqueVisitors24h} />
+        <Card label="Unique visitors · 7d" value={summary.uniqueVisitors7d} />
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4">
@@ -51,9 +54,14 @@ export default async function AdminAnalytics() {
         />
         <Table title="Browsers (7d)" rows={summary.browsers.map((b) => [b.browser, b.count])} />
         <Table
-          title="Countries (7d)"
+          title="Pageviews by country (7d)"
           rows={summary.countries.map((c) => [c.country, c.count])}
           emptyHint="Populated once traffic reaches the live domain (Vercel sends the visitor's country)."
+        />
+        <Table
+          title="Unique visitors by country (7d)"
+          rows={summary.uniqueVisitorCountries.map((c) => [c.country, c.count])}
+          emptyHint="Populated once traffic reaches the live domain."
         />
       </div>
     </div>

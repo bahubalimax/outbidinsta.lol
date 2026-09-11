@@ -211,10 +211,12 @@ model PageView {
   browser   String? // coarse UA parse: Chrome / Safari / Firefox / Edge / Other
   device    String? // "mobile" | "desktop"
   country   String? // ISO country code from the hosting platform's geo header, if present
+  visitorHash String? // sha256(ip + UA + daily UTC salt), truncated — rotates every UTC day, never reversible to an IP. Approximates unique visitors without a persistent identifier; not stored raw, not a cookie.
   createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([path, createdAt])
+  @@index([visitorHash])
 }
 
 /// Single-row table (id = 1) holding configurable business rules.

@@ -1,7 +1,9 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
-import { utcDayRange } from "@/lib/date-windows";
+import { utcDayRange, utcDateKey } from "@/lib/date-windows";
+import { env } from "@/lib/env";
 
 /**
  * Minimal, self-hosted analytics — a "just enough" stand-in for a paid tool
@@ -14,6 +16,7 @@ export interface TrackInput {
   referrer?: string | null;
   userAgent?: string | null;
   country?: string | null;
+  ip?: string | null;
 }
 
 /**
@@ -66,6 +69,20 @@ function referrerHost(referrer: string | null | undefined): string | null {
   }
 }
 
+/**
+ * A daily-rotating, non-reversible fingerprint used only to approximate
+ * unique visitors — never a persistent identifier. Salted with a server
+ * secret + the current UTC date, so the same person hashes differently
+ * tomorrow and the raw IP is never stored or recoverable from this value.
+ */
+function hashVisitor(ip: string, userAgent: string | null | undefined): string | null {
+  if (!ip || ip === "unknown") return null;
+  return createHash("sha256")
+    .update(`${ip}|${userAgent ?? ""}|${utcDateKey()}|${env.authSecret}`)
+    .digest("hex")
+    .slice(0, 24);
+}
+
 export async function recordPageView(input: TrackInput): Promise<void> {
   const { browser, device } = parseUserAgent(input.userAgent);
   await prisma.pageView.create({
@@ -75,18 +92,21 @@ export async function recordPageView(input: TrackInput): Promise<void> {
       browser,
       device,
       country: input.country?.slice(0, 8) ?? null,
+      visitorHash: hashVisitor(input.ip ?? "", input.userAgent),
     },
   });
 }
 
 export interface AnalyticsSummary {
-  visitors24h: number;
   pageviews24h: number;
   pageviews7d: number;
+  uniqueVisitors24h: number;
+  uniqueVisitors7d: number;
   topPages: { path: string; count: number }[];
   topReferrers: { referrer: string; count: number }[];
   browsers: { browser: string; count: number }[];
   countries: { country: string; count: number }[];
+  uniqueVisitorCountries: { country: string; count: number }[];
   hourly: { hour: string; count: number }[];
 }
 
@@ -95,49 +115,79 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
   const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const since7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const [pageviews24h, pageviews7d, topPagesRaw, topReferrersRaw, browsersRaw, countriesRaw, recentRows] =
-    await Promise.all([
-      prisma.pageView.count({ where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC } }),
-      prisma.pageView.count({ where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC } }),
-      prisma.pageView.groupBy({
-        by: ["path"],
-        where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC },
-        _count: { path: true },
-        orderBy: { _count: { path: "desc" } },
-        take: 10,
-      }),
-      prisma.pageView.groupBy({
-        by: ["referrer"],
-        where: { createdAt: { gte: since7d }, referrer: { not: null, notIn: EXCLUDED_REFERRERS } },
-        _count: { referrer: true },
-        orderBy: { _count: { referrer: "desc" } },
-        take: 10,
-      }),
-      prisma.pageView.groupBy({
-        by: ["browser"],
-        where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC },
-        _count: { browser: true },
-        orderBy: { _count: { browser: "desc" } },
-        take: 10,
-      }),
-      prisma.pageView.groupBy({
-        by: ["country"],
-        where: { createdAt: { gte: since7d }, country: { not: null }, ...REAL_TRAFFIC },
-        _count: { country: true },
-        orderBy: { _count: { country: "desc" } },
-        take: 10,
-      }),
-      // Bucketed in JS below — simple and fine at this traffic scale.
-      prisma.pageView.findMany({
-        where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC },
-        select: { createdAt: true },
-      }),
-    ]);
+  const [
+    pageviews24h,
+    pageviews7d,
+    topPagesRaw,
+    topReferrersRaw,
+    browsersRaw,
+    countriesRaw,
+    recentRows,
+    uniqueRows24h,
+    uniqueRows7d,
+  ] = await Promise.all([
+    prisma.pageView.count({ where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC } }),
+    prisma.pageView.count({ where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC } }),
+    prisma.pageView.groupBy({
+      by: ["path"],
+      where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC },
+      _count: { path: true },
+      orderBy: { _count: { path: "desc" } },
+      take: 10,
+    }),
+    prisma.pageView.groupBy({
+      by: ["referrer"],
+      where: { createdAt: { gte: since7d }, referrer: { not: null, notIn: EXCLUDED_REFERRERS } },
+      _count: { referrer: true },
+      orderBy: { _count: { referrer: "desc" } },
+      take: 10,
+    }),
+    prisma.pageView.groupBy({
+      by: ["browser"],
+      where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC },
+      _count: { browser: true },
+      orderBy: { _count: { browser: "desc" } },
+      take: 10,
+    }),
+    prisma.pageView.groupBy({
+      by: ["country"],
+      where: { createdAt: { gte: since7d }, country: { not: null }, ...REAL_TRAFFIC },
+      _count: { country: true },
+      orderBy: { _count: { country: "desc" } },
+      take: 10,
+    }),
+    // Bucketed in JS below — simple and fine at this traffic scale.
+    prisma.pageView.findMany({
+      where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC },
+      select: { createdAt: true },
+    }),
+    // Distinct visitorHash rows, deduped and counted by country in JS —
+    // Prisma has no "count distinct grouped by" primitive, and this table is
+    // small enough that fetching + reducing client-side is simpler and fine.
+    prisma.pageView.findMany({
+      where: { createdAt: { gte: since24h }, visitorHash: { not: null }, ...REAL_TRAFFIC },
+      distinct: ["visitorHash"],
+      select: { visitorHash: true },
+    }),
+    prisma.pageView.findMany({
+      where: { createdAt: { gte: since7d }, visitorHash: { not: null }, ...REAL_TRAFFIC },
+      distinct: ["visitorHash"],
+      select: { visitorHash: true, country: true },
+    }),
+  ]);
 
-  // Rough "visitors" proxy: distinct (path, hour) is not a real session count,
-  // so instead we just report pageviews as "visitors24h" divided evenly isn't
-  // honest either — be upfront that this is pageviews, not deduped sessions.
-  const visitors24h = pageviews24h;
+  const uniqueVisitors24h = uniqueRows24h.length;
+  const uniqueVisitors7d = uniqueRows7d.length;
+
+  const countryCounts = new Map<string, number>();
+  for (const row of uniqueRows7d) {
+    const key = row.country ?? "Unknown";
+    countryCounts.set(key, (countryCounts.get(key) ?? 0) + 1);
+  }
+  const uniqueVisitorCountries = [...countryCounts.entries()]
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 
   const hourly: { hour: string; count: number }[] = [];
   const buckets = new Map<string, number>();
@@ -155,9 +205,10 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
   for (const [hour, count] of buckets) hourly.push({ hour, count });
 
   return {
-    visitors24h,
     pageviews24h,
     pageviews7d,
+    uniqueVisitors24h,
+    uniqueVisitors7d,
     topPages: topPagesRaw.map((r) => ({ path: r.path, count: r._count.path })),
     topReferrers: topReferrersRaw.map((r) => ({
       referrer: r.referrer ?? "direct",
@@ -165,6 +216,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     })),
     browsers: browsersRaw.map((r) => ({ browser: r.browser ?? "Other", count: r._count.browser })),
     countries: countriesRaw.map((r) => ({ country: r.country ?? "Unknown", count: r._count.country })),
+    uniqueVisitorCountries,
     hourly,
   };
 }

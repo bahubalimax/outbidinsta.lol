@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       referrer: parsed.data.referrer,
       userAgent: req.headers.get("user-agent"),
       country,
+      ip,
     });
 
     return jsonOk({ ok: true });
