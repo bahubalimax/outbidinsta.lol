@@ -213,9 +213,9 @@ export async function GET(
                     }}
                   >
                     {avatarDataUri ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={avatarDataUri}
+                        alt=""
                         width={176}
                         height={176}
                         style={{ objectFit: "cover" }}

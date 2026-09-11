@@ -6,9 +6,17 @@ import { SiteFooter } from "@/components/site-footer";
 import { ThemeScript } from "@/components/theme-toggle";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { TestModeTicker } from "@/components/test-mode-ticker";
+import { TryNowPopup } from "@/components/try-now-popup";
 import { getActiveCategoriesForForm } from "@/lib/leaderboard";
 import { getHeaderStats } from "@/lib/analytics";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL, TEST_MODE_BANNER_ENABLED } from "@/lib/site";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TAGLINE,
+  SITE_URL,
+  TEST_MODE_BANNER_ENABLED,
+  TRY_NOW_POPUP_ENABLED,
+} from "@/lib/site";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -81,6 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main className="w-full flex-1">{children}</main>
         <SiteFooter />
         <AnalyticsBeacon />
+        {TRY_NOW_POPUP_ENABLED && <TryNowPopup />}
       </body>
     </html>
   );

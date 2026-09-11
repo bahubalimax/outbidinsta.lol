@@ -45,6 +45,13 @@ export const SOCIAL_LINKS: { href: string; label: string }[] = [
 export const TEST_MODE_BANNER_ENABLED = true;
 export const TEST_MODE_LIVE_ETA = "2026-09-13T17:00:00.000Z";
 
+/**
+ * Full-screen "try now, it costs nothing" popup. Same lifecycle as the
+ * ticker above — flip TRY_NOW_POPUP_ENABLED to false (or delete
+ * <TryNowPopup/> from layout.tsx) once real payments go live.
+ */
+export const TRY_NOW_POPUP_ENABLED = true;
+
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
