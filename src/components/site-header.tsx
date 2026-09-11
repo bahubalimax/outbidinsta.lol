@@ -5,13 +5,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { CategoryStrip } from "@/components/category-strip";
 import { LiveVisitorPill } from "@/components/live-visitor-pill";
 import { Logo } from "@/components/logo";
+import type { HeaderStats } from "@/lib/analytics";
 
 export function SiteHeader({
   categories,
-  activeNow = 0,
+  headerStats = { activeNow: 0, visitorsToday: 0 },
 }: {
   categories: { name: string; slug: string }[];
-  activeNow?: number;
+  headerStats?: HeaderStats;
 }) {
   return (
     <header className="w-full border-b border-border/70">
@@ -25,7 +26,7 @@ export function SiteHeader({
               <Logo />
             </Link>
             <div className="hidden min-w-0 md:block">
-              <LiveVisitorPill activeNow={activeNow} />
+              <LiveVisitorPill activeNow={headerStats.activeNow} visitorsToday={headerStats.visitorsToday} />
             </div>
           </div>
 

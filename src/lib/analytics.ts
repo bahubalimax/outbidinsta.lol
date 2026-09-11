@@ -164,3 +164,36 @@ const getActiveNowUncached = async (): Promise<number> => {
 export const getActiveNow = unstable_cache(getActiveNowUncached, ["active-now"], {
   revalidate: 20,
 });
+
+export interface HeaderStats {
+  activeNow: number;
+  visitorsToday: number;
+}
+
+/**
+ * Header pill numbers: "active now" (last 5 min) and "visitors today" (last
+ * rolling 24h, matching the site's own "Today" board window rather than a
+ * UTC-midnight reset). Both are real pageview counts — see getActiveNow.
+ */
+const getHeaderStatsUncached = async (): Promise<HeaderStats> => {
+  const since5m = new Date(Date.now() - 5 * 60 * 1000);
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const [activeNow, visitorsToday] = await Promise.all([
+    prisma.pageView.count({ where: { createdAt: { gte: since5m } } }),
+    prisma.pageView.count({ where: { createdAt: { gte: since24h } } }),
+  ]);
+  return { activeNow, visitorsToday };
+};
+
+export const getHeaderStats = unstable_cache(getHeaderStatsUncached, ["header-stats"], {
+  revalidate: 20,
+});
+
+/** All-time pageview count, for the public "stats since launch" strip. */
+const getAllTimeVisitorsUncached = async (): Promise<number> => {
+  return prisma.pageView.count();
+};
+
+export const getAllTimeVisitors = unstable_cache(getAllTimeVisitorsUncached, ["all-time-visitors"], {
+  revalidate: 60,
+});

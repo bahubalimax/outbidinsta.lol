@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ThemeScript } from "@/components/theme-toggle";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { getActiveCategoriesForForm } from "@/lib/leaderboard";
-import { getActiveNow } from "@/lib/analytics";
+import { getHeaderStats } from "@/lib/analytics";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 
 const poppins = Poppins({
@@ -60,9 +60,9 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [categories, activeNow] = await Promise.all([
+  const [categories, headerStats] = await Promise.all([
     getActiveCategoriesForForm().catch(() => []),
-    getActiveNow().catch(() => 0),
+    getHeaderStats().catch(() => ({ activeNow: 0, visitorsToday: 0 })),
   ]);
 
   return (
@@ -75,7 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeScript />
       </head>
       <body className="flex min-h-dvh flex-col">
-        <SiteHeader categories={categories} activeNow={activeNow} />
+        <SiteHeader categories={categories} headerStats={headerStats} />
         <main className="w-full flex-1">{children}</main>
         <SiteFooter />
         <AnalyticsBeacon />
