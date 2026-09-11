@@ -4,6 +4,7 @@ import { prisma, runSerializable } from "@/lib/db";
 import { getListingRank, recomputeListingTotal } from "@/lib/listings";
 import { recordActivity } from "@/lib/activity";
 import { refundPayment } from "@/lib/dodo";
+import { fetchInstagramAvatarUrl } from "@/lib/instagram-avatar";
 import { getSettings } from "@/lib/settings";
 import { log } from "@/lib/logger";
 
@@ -154,6 +155,24 @@ export async function confirmBidPayment(input: ConfirmInput): Promise<ConfirmRes
       getListingRank(result.listingId),
     ]);
     const bid = await prisma.bid.findUnique({ where: { id: result.bidId! } });
+
+    // Avatar: prefer whatever the bidder supplied themselves (always wins —
+    // they chose to update it), otherwise best-effort backfill from a public
+    // Instagram lookup if the listing doesn't have one yet. Never blocks or
+    // fails the payment itself.
+    if (listing) {
+      const payment = await prisma.payment.findFirst({ where: { bidId: result.bidId! } });
+      const suppliedAvatarUrl =
+        typeof (payment?.metadata as Record<string, unknown> | null)?.avatarUrl === "string"
+          ? ((payment!.metadata as Record<string, unknown>).avatarUrl as string)
+          : null;
+      const avatarUrl =
+        suppliedAvatarUrl ?? (listing.avatarUrl ? null : await fetchInstagramAvatarUrl(result.username!));
+      if (avatarUrl) {
+        await prisma.listing.update({ where: { id: result.listingId! }, data: { avatarUrl } }).catch(() => {});
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
       await recordActivity(tx, {
         type: listing && listing.bidCount <= 1 ? "NEW_LISTING" : "RAISE",

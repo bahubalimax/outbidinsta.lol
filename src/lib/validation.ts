@@ -26,6 +26,9 @@ export const createBidSchema = z
     // Optional — Dodo's own hosted checkout collects the paying email; we
     // don't need to ask twice. See src/lib/bids.ts for the guest fallback.
     email: emailSchema.optional(),
+    // Optional — a self-supplied photo for the leaderboard row/ticket. We
+    // never scrape Instagram for this (see src/lib/instagram-avatar.ts).
+    avatarUrl: z.string().trim().url().max(2000).optional().or(z.literal("")),
     intendedTop: z.boolean().optional(),
   })
   .refine((d) => d.listingId || (d.instagram && d.categorySlug), {

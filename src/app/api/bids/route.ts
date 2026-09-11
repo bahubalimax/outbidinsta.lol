@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       categorySlug: parsed.categorySlug,
       amountRaw: parsed.amount,
       email: parsed.email,
+      avatarUrl: parsed.avatarUrl || undefined,
       intendedTop: parsed.intendedTop,
     });
 

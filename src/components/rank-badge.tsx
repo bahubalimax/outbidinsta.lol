@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { cn } from "@/components/ui";
 
 export function RankBadge({ rank, className }: { rank: number; className?: string }) {
@@ -32,8 +35,9 @@ export function Avatar({
   src?: string | null;
   size?: number;
 }) {
+  const [broken, setBroken] = useState(false);
   const initial = username.replace(/[^a-z0-9]/gi, "").slice(0, 1).toUpperCase() || "?";
-  if (src) {
+  if (src && !broken) {
     return (
       <img
         src={src}
@@ -41,6 +45,7 @@ export function Avatar({
         width={size}
         height={size}
         loading="lazy"
+        onError={() => setBroken(true)}
         className="rounded-full border border-border object-cover"
         style={{ width: size, height: size }}
       />

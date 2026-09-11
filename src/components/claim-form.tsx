@@ -45,6 +45,8 @@ export function ClaimForm({
 }: ClaimFormProps) {
   const [handle, setHandle] = useState(prefillHandle ?? "");
   const [categorySlug, setCategorySlug] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [showAvatarField, setShowAvatarField] = useState(false);
   const [targetCents, setTargetCents] = useState(prefillTargetCents ?? claimTopCents);
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -169,12 +171,14 @@ export function ClaimForm({
             ? {
                 listingId: lookup.listingId,
                 amount: String(minorToMajor(targetCents, currency)),
+                avatarUrl: avatarUrl.trim() || undefined,
                 intendedTop: true,
               }
             : {
                 instagram: handle,
                 categorySlug,
                 amount: String(minorToMajor(targetCents, currency)),
+                avatarUrl: avatarUrl.trim() || undefined,
                 intendedTop: true,
               },
         ),
@@ -301,6 +305,28 @@ export function ClaimForm({
               ? "Starting…"
               : `Claim rank · ${formatMoney(chargeCents || minCents, currency)}`}
           </button>
+        </div>
+
+        <div className="mx-auto w-[92%] md:w-full">
+          {showAvatarField ? (
+            <input
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="Photo URL (optional) — shown on your leaderboard row & ticket"
+              autoComplete="off"
+              type="url"
+              aria-label="Photo URL"
+              className="h-10 w-full min-w-0 rounded-xl border border-input bg-popover px-3.5 text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAvatarField(true)}
+              className="text-xs font-medium text-muted-foreground underline decoration-dashed underline-offset-4 hover:text-foreground"
+            >
+              + Add a photo (optional)
+            </button>
+          )}
         </div>
 
         {helper && (

@@ -2,6 +2,8 @@ import { ImageResponse } from "next/og";
 import { getProfileView } from "@/lib/profile";
 import { formatMoney } from "@/lib/money";
 import { SITE_NAME } from "@/lib/site";
+import { prisma } from "@/lib/db";
+import { fetchInstagramAvatarUrl, toAvatarDataUri } from "@/lib/instagram-avatar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +37,17 @@ export async function GET(
   const currency = view?.currency ?? "USD";
   const initial = handle.replace(/[^a-z0-9]/gi, "").slice(0, 1).toUpperCase() || "?";
   const dateLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  // Real profile photo when we can get one — never blocks on failure, the
+  // initials ring above is always the fallback.
+  let avatarUrl = view?.avatarUrl ?? null;
+  if (view && !avatarUrl) {
+    avatarUrl = await fetchInstagramAvatarUrl(handle);
+    if (avatarUrl) {
+      await prisma.listing.update({ where: { id: view.listingId }, data: { avatarUrl } }).catch(() => {});
+    }
+  }
+  const avatarDataUri = avatarUrl ? await toAvatarDataUri(avatarUrl) : null;
 
   const headline = rank === 1 ? "You're #1" : rank ? `Rank #${rank} claimed` : "On the board";
   const subtitle =
@@ -190,6 +203,7 @@ export async function GET(
                       width: 176,
                       height: 176,
                       borderRadius: 999,
+                      overflow: "hidden",
                       background: BRAND_GRADIENT,
                       alignItems: "center",
                       justifyContent: "center",
@@ -198,7 +212,17 @@ export async function GET(
                       color: "#fff",
                     }}
                   >
-                    {initial}
+                    {avatarDataUri ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={avatarDataUri}
+                        width={176}
+                        height={176}
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      initial
+                    )}
                   </div>
                 </div>
               </div>
