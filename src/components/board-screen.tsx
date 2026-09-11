@@ -101,13 +101,15 @@ export async function BoardScreen({
   const activeCategory = formCategories.find((c) => c.slug === categorySlug);
   const dayKeys = board === "daily" ? recentDayKeys(8) : [];
 
+  const showSidebar = isPage1 && !!top10 && top10.rows.length > 0;
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-3 pb-16 md:gap-8 md:pt-4">
-      <div className="flex flex-col gap-5 md:gap-6">
-        <BoardTabs active={board} showDaily={settings.dailyBoardEnabled} />
+      <div className={cn(showSidebar && "lg:grid lg:grid-cols-[1fr_280px] lg:items-start lg:gap-6")}>
+        <div className="flex flex-col gap-5 md:gap-6">
+          <BoardTabs active={board} showDaily={settings.dailyBoardEnabled} />
 
-        {isPage1 && (
-          <div className={cn(top10 && top10.rows.length > 0 && "lg:grid lg:grid-cols-[1fr_280px] lg:items-start lg:gap-6")}>
+          {isPage1 && (
             <ClaimForm
               categories={formCategories}
               claimTopCents={result.claimTopCents}
@@ -115,71 +117,72 @@ export async function BoardScreen({
               minIncrementCents={settings.minIncrementCents}
               currency={settings.currency}
             />
-            {top10 && <TopSidebar rows={top10.rows} className="mt-6 lg:mt-0 lg:translate-y-[267px]" />}
+          )}
+
+          <p className="mx-auto max-w-xl text-center text-xs leading-normal text-muted-foreground text-balance">
+            <span className="font-semibold text-foreground">OUTBID INSTAGRAM.</span>{" "}
+            {activeCategory ? `${activeCategory.name} — ${BOARD_COPY[board].label}. ` : `${BOARD_COPY[board].label} board. `}
+            {BOARD_COPY[board].blurb} New listings from{" "}
+            {formatMoney(settings.startingBidCents, settings.currency)}; taking #1 costs{" "}
+            {formatMoney(settings.takeTopIncrementCents, settings.currency)} over the leader.
+          </p>
+
+          {board === "daily" && (
+            <div className="obi-scroll-x -mx-4 flex justify-center gap-1.5 overflow-x-auto px-4">
+              {dayKeys.map((key) => {
+                const isToday = key === utcDateKey();
+                const active = (dateKey ?? utcDateKey()) === key;
+                return (
+                  <Link
+                    key={key}
+                    href={isToday ? "/daily" : `/daily/${key}`}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3 py-1 text-xs font-medium whitespace-nowrap",
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {isToday ? "Today" : key.slice(5)}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          <div id="leaderboard" className="flex scroll-mt-6 flex-col">
+            {rows.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+                {board === "all"
+                  ? "No profiles ranked yet. Be the first — paste your @username above."
+                  : "Nothing has been paid in this window yet."}
+              </div>
+            ) : homeLike && isPage1 ? (
+              <>
+                <TierList rows={rows.slice(0, 3)} />
+                <TodayStrip rows={today?.rows ?? []} seeAllHref="/today" />
+                {rows.length > 3 && <FlatList rows={rows.slice(3, 10)} />}
+                {rows.length > 10 && <ActivityStrip items={activityItems} />}
+                {rows.length > 10 && <FlatList rows={rows.slice(10)} offset={3} />}
+                {result.total >= 20 && <TopDivider n={Math.min(rows.length, pageSize)} />}
+              </>
+            ) : (
+              <LeaderboardList rows={rows} tiered={page === 1} />
+            )}
+
+            <div className="mt-3">
+              <Pagination
+                page={page}
+                totalPages={result.totalPages}
+                total={result.total}
+                pageSize={pageSize}
+                hrefForPage={(p) => mkHref({ page: p > 1 ? String(p) : undefined })}
+              />
+            </div>
           </div>
-        )}
-
-        <p className="mx-auto max-w-xl text-center text-xs leading-normal text-muted-foreground text-balance">
-          <span className="font-semibold text-foreground">OUTBID INSTAGRAM.</span>{" "}
-          {activeCategory ? `${activeCategory.name} — ${BOARD_COPY[board].label}. ` : `${BOARD_COPY[board].label} board. `}
-          {BOARD_COPY[board].blurb} New listings from{" "}
-          {formatMoney(settings.startingBidCents, settings.currency)}; taking #1 costs{" "}
-          {formatMoney(settings.takeTopIncrementCents, settings.currency)} over the leader.
-        </p>
-
-        {board === "daily" && (
-          <div className="obi-scroll-x -mx-4 flex justify-center gap-1.5 overflow-x-auto px-4">
-            {dayKeys.map((key) => {
-              const isToday = key === utcDateKey();
-              const active = (dateKey ?? utcDateKey()) === key;
-              return (
-                <Link
-                  key={key}
-                  href={isToday ? "/daily" : `/daily/${key}`}
-                  className={cn(
-                    "shrink-0 rounded-full border px-3 py-1 text-xs font-medium whitespace-nowrap",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {isToday ? "Today" : key.slice(5)}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div id="leaderboard" className="flex scroll-mt-6 flex-col">
-        {rows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            {board === "all"
-              ? "No profiles ranked yet. Be the first — paste your @username above."
-              : "Nothing has been paid in this window yet."}
-          </div>
-        ) : homeLike && isPage1 ? (
-          <>
-            <TierList rows={rows.slice(0, 3)} />
-            <TodayStrip rows={today?.rows ?? []} seeAllHref="/today" />
-            {rows.length > 3 && <FlatList rows={rows.slice(3, 10)} />}
-            {rows.length > 10 && <ActivityStrip items={activityItems} />}
-            {rows.length > 10 && <FlatList rows={rows.slice(10)} offset={3} />}
-            {result.total >= 20 && <TopDivider n={Math.min(rows.length, pageSize)} />}
-          </>
-        ) : (
-          <LeaderboardList rows={rows} tiered={page === 1} />
-        )}
-
-        <div className="mt-3">
-          <Pagination
-            page={page}
-            totalPages={result.totalPages}
-            total={result.total}
-            pageSize={pageSize}
-            hrefForPage={(p) => mkHref({ page: p > 1 ? String(p) : undefined })}
-          />
         </div>
+
+        {showSidebar && <TopSidebar rows={top10!.rows} className="mt-6 lg:mt-[267px]" />}
       </div>
 
       {board === "all" && isPage1 && (
