@@ -49,7 +49,7 @@ export async function GET(
   }
   const avatarDataUri = avatarUrl ? await toAvatarDataUri(avatarUrl) : null;
 
-  const headline = rank === 1 ? "You're #1" : rank ? `Rank #${rank} claimed` : "On the board";
+  const headline = "Top Bidder";
   const subtitle =
     rank === 1
       ? "Certified #1 bidder"
