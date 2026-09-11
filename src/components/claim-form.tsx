@@ -36,6 +36,8 @@ export interface ClaimFormProps {
   prefillTargetCents?: number;
   /** New listings/bids are paused — show a closed notice instead of the form. */
   closed?: boolean;
+  /** Showing on the Daily board's current (live) day — heading reads "Claim today's #1". */
+  todayVariant?: boolean;
 }
 
 export function ClaimForm({
@@ -47,6 +49,7 @@ export function ClaimForm({
   prefillHandle,
   prefillTargetCents,
   closed = false,
+  todayVariant = false,
 }: ClaimFormProps) {
   const [handle, setHandle] = useState(prefillHandle ?? "");
   const [categorySlug, setCategorySlug] = useState("");
@@ -230,7 +233,7 @@ export function ClaimForm({
       </span>
 
       <h2 className="mx-auto max-w-4xl text-center text-[28px] font-semibold tracking-[-0.03em] text-pretty md:text-[40px]">
-        <span>Claim #1 for</span>{" "}
+        <span>{todayVariant ? "Claim today's #1 for" : "Claim #1 for"}</span>{" "}
         <span className="inline-flex items-center gap-2 align-middle whitespace-nowrap">
           <button
             type="button"

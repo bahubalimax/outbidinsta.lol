@@ -9,6 +9,7 @@ import {
   type BoardKind,
 } from "@/lib/leaderboard";
 import { TopSidebar } from "@/components/top-sidebar";
+import { DailyResetCountdown } from "@/components/daily-reset-countdown";
 import { getRecentActivity } from "@/lib/activity";
 import { recentDayKeys, utcDateKey } from "@/lib/date-windows";
 import { ClaimForm } from "@/components/claim-form";
@@ -102,12 +103,15 @@ export async function BoardScreen({
   const dayKeys = board === "daily" ? recentDayKeys(8) : [];
 
   const showSidebar = isPage1 && !!top10 && top10.rows.length > 0;
+  const isCurrentDailyDay = board === "daily" && (!dateKey || dateKey === utcDateKey());
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-3 pb-16 md:gap-8 md:pt-4">
       <div className={cn(showSidebar && "lg:grid lg:grid-cols-[1fr_280px] lg:items-start lg:gap-6")}>
         <div className="flex flex-col gap-5 md:gap-6">
           <BoardTabs active={board} showDaily={settings.dailyBoardEnabled} />
+
+          {isCurrentDailyDay && <DailyResetCountdown />}
 
           {isPage1 && (
             <ClaimForm
@@ -117,6 +121,7 @@ export async function BoardScreen({
               minIncrementCents={settings.minIncrementCents}
               currency={settings.currency}
               closed={!settings.listingsEnabled || !settings.biddingEnabled}
+              todayVariant={isCurrentDailyDay}
             />
           )}
 
