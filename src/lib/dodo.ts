@@ -91,3 +91,8 @@ export async function refundPayment(providerPaymentId: string, reason: string): 
 export async function retrievePayment(providerPaymentId: string) {
   return dodo().payments.retrieve(providerPaymentId);
 }
+
+/** Retrieve a checkout session's current status — used by the reconcile poller. */
+export async function retrieveCheckoutSession(checkoutSessionId: string) {
+  return dodo().checkoutSessions.retrieve(checkoutSessionId);
+}

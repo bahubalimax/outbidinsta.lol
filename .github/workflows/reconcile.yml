@@ -1,0 +1,25 @@
+name: Reconcile pending payments
+
+on:
+  schedule:
+    # GitHub Actions cron has ~5 min minimum practical resolution and can
+    # occasionally run late under load — this is a safety net, not a
+    # latency guarantee.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reconcile endpoint
+        run: |
+          status=$(curl -s -o /tmp/body.json -w "%{http_code}" \
+            -X POST "https://outbidinsta.lol/api/cron/reconcile" \
+            -H "Authorization: Bearer ${{ secrets.RECONCILE_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/body.json
+          if [ "$status" != "200" ]; then
+            echo "Reconcile call failed"
+            exit 1
+          fi

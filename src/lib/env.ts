@@ -63,4 +63,7 @@ export const env = {
   get isProduction() {
     return process.env.NODE_ENV === "production";
   },
+  get reconcileSecret() {
+    return isBuildPhase ? optional("RECONCILE_SECRET") : required("RECONCILE_SECRET");
+  },
 };
