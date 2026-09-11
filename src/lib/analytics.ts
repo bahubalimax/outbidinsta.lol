@@ -220,3 +220,42 @@ export const getPublicCountryBreakdown = unstable_cache(
   ["public-country-breakdown"],
   { revalidate: 300 },
 );
+
+export interface LabeledStat {
+  label: string;
+  count: number;
+}
+
+/** Public, all-time referrer breakdown — hostname only (never a full URL), "Direct" for no referrer. */
+const getPublicReferrerBreakdownUncached = async (): Promise<LabeledStat[]> => {
+  const rows = await prisma.pageView.groupBy({
+    by: ["referrer"],
+    _count: { referrer: true },
+    orderBy: { _count: { referrer: "desc" } },
+    take: 8,
+  });
+  return rows.map((r) => ({ label: r.referrer ?? "Direct", count: r._count.referrer }));
+};
+
+export const getPublicReferrerBreakdown = unstable_cache(
+  getPublicReferrerBreakdownUncached,
+  ["public-referrer-breakdown"],
+  { revalidate: 300 },
+);
+
+/** Public, all-time browser breakdown. */
+const getPublicBrowserBreakdownUncached = async (): Promise<LabeledStat[]> => {
+  const rows = await prisma.pageView.groupBy({
+    by: ["browser"],
+    _count: { browser: true },
+    orderBy: { _count: { browser: "desc" } },
+    take: 8,
+  });
+  return rows.map((r) => ({ label: r.browser ?? "Other", count: r._count.browser }));
+};
+
+export const getPublicBrowserBreakdown = unstable_cache(
+  getPublicBrowserBreakdownUncached,
+  ["public-browser-breakdown"],
+  { revalidate: 300 },
+);
