@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AFFILIATION_DISCLAIMER, FOOTER_NAV, SITE_NAME, SOCIAL_LINKS } from "@/lib/site";
-import { IconX } from "@/components/icons";
+import { IconX, IconInstagram } from "@/components/icons";
+
+const SOCIAL_ICONS = { x: IconX, instagram: IconInstagram };
 
 export function SiteFooter() {
   return (
@@ -20,18 +22,21 @@ export function SiteFooter() {
       </nav>
       {SOCIAL_LINKS.length > 0 && (
         <div className="mt-4 flex items-center justify-center gap-3">
-          {SOCIAL_LINKS.map((s) => (
-            <a
-              key={s.href}
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={s.label}
-              className="grid size-8 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              <IconX className="size-4" />
-            </a>
-          ))}
+          {SOCIAL_LINKS.map((s) => {
+            const Icon = SOCIAL_ICONS[s.icon];
+            return (
+              <a
+                key={s.href}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                className="grid size-8 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <Icon className="size-4" />
+              </a>
+            );
+          })}
         </div>
       )}
       <p className="mx-auto mt-5 max-w-2xl px-4 text-xs leading-relaxed text-muted-foreground">

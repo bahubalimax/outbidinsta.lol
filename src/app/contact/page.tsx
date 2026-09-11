@@ -14,7 +14,11 @@ export default function ContactPage() {
     <Prose title="Contact">
       <p>
         For support, refund reviews, listing removal requests, category changes, or press: email{" "}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> or DM{" "}
+        <a href="https://instagram.com/outbidinsta.lol" target="_blank" rel="noopener noreferrer">
+          @outbidinsta.lol
+        </a>{" "}
+        on Instagram.
       </p>
       <h2>Please include</h2>
       <ul>

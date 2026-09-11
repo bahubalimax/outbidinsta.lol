@@ -221,16 +221,29 @@ export interface CountryStat {
   count: number;
 }
 
-/** Public, all-time country breakdown for the /stats page — counts only, no page/referrer detail. */
+/**
+ * Public, all-time country breakdown for the /stats page — counts only, no
+ * page/referrer detail. Rows with no resolved country (e.g. localhost/private
+ * IPs during dev) are bucketed as "Unknown" rather than dropped, so this
+ * chart's total always matches the browser chart's — every real pageview is
+ * accounted for somewhere.
+ */
 const getPublicCountryBreakdownUncached = async (): Promise<CountryStat[]> => {
   const rows = await prisma.pageView.groupBy({
     by: ["country"],
-    where: { country: { not: null }, ...REAL_TRAFFIC },
+    where: REAL_TRAFFIC,
     _count: { country: true },
     orderBy: { _count: { country: "desc" } },
-    take: 8,
   });
-  return rows.map((r) => ({ code: r.country ?? "??", count: r._count.country }));
+  const known = rows
+    .filter((r) => r.country !== null)
+    .map((r) => ({ code: r.country as string, count: r._count.country }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+  const unknownCount = rows
+    .filter((r) => r.country === null)
+    .reduce((sum, r) => sum + r._count.country, 0);
+  return unknownCount > 0 ? [...known, { code: "??", count: unknownCount }] : known;
 };
 
 export const getPublicCountryBreakdown = unstable_cache(

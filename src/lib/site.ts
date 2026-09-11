@@ -31,8 +31,9 @@ export const FOOTER_NAV = [
   { href: "/contact", label: "Contact" },
 ];
 
-export const SOCIAL_LINKS: { href: string; label: string }[] = [
-  { href: "https://x.com/outbidinsta", label: "X (Twitter)" },
+export const SOCIAL_LINKS: { href: string; label: string; icon: "x" | "instagram" }[] = [
+  { href: "https://x.com/outbidinsta", label: "X (Twitter)", icon: "x" },
+  { href: "https://instagram.com/outbidinsta.lol", label: "Instagram", icon: "instagram" },
 ];
 
 /**

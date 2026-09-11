@@ -67,8 +67,8 @@ export default async function StatsPage() {
             {countries.map((c) => (
               <div key={c.code} className="flex items-center gap-3">
                 <span className="w-8 shrink-0 text-base">{flagEmoji(c.code)}</span>
-                <span className="w-10 shrink-0 text-xs font-medium text-muted-foreground">
-                  {c.code}
+                <span className="w-14 shrink-0 text-xs font-medium text-muted-foreground">
+                  {c.code === "??" ? "Unknown" : c.code}
                 </span>
                 <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
