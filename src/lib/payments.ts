@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { prisma, runSerializable } from "@/lib/db";
 import { getListingRank, recomputeListingTotal } from "@/lib/listings";
 import { recordActivity } from "@/lib/activity";
@@ -165,6 +166,9 @@ export async function confirmBidPayment(input: ConfirmInput): Promise<ConfirmRes
         currency: listing?.currency,
       });
     });
+    // The rank only ever changes here (after a verified webhook) — bust the
+    // short-lived board cache immediately instead of waiting for it to expire.
+    revalidateTag("board");
   }
 
   if (result.outcome === "voided" && settings.autoRefundVoided) {
@@ -275,6 +279,7 @@ export async function handleRefundSucceeded(
       await tx.bid.update({ where: { id: bid.id }, data: { status: "REFUNDED" } });
     }
   });
+  revalidateTag("board");
 }
 
 /** `dispute.opened` — treat a disputed contribution as removed from the totals. */
@@ -304,4 +309,5 @@ export async function handleDisputeOpened(
       log.info("dispute.applied", { bidId: bid.id, listingId: payment.listingId });
     }
   });
+  revalidateTag("board");
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSettings, toBiddingRules } from "@/lib/settings";
 import { minTargetTotalCents } from "@/lib/bidding";
@@ -37,7 +38,7 @@ export interface ProfileView {
   }[];
 }
 
-export async function getProfileView(rawUsername: string): Promise<ProfileView | null> {
+async function getProfileViewUncached(rawUsername: string): Promise<ProfileView | null> {
   const normalized = tryNormalizeInstagram(rawUsername);
   const username = normalized?.username ?? rawUsername.toLowerCase();
 
@@ -111,3 +112,8 @@ export async function getProfileView(rawUsername: string): Promise<ProfileView |
     })),
   };
 }
+
+export const getProfileView = unstable_cache(getProfileViewUncached, ["profile-view"], {
+  revalidate: 5,
+  tags: ["board"],
+});

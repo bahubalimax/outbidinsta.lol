@@ -1,9 +1,20 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSettings, toBiddingRules } from "@/lib/settings";
 import { claimRankTargetCents } from "@/lib/bidding";
 import { rollingWindow, utcDayRange, parseUtcDateKey } from "@/lib/date-windows";
+
+/**
+ * Board reads are hit on every homepage/category/today/daily view and were
+ * the biggest source of repeat DB round-trips under load. A short cache
+ * (BOARD_CACHE_SECONDS) means concurrent/repeat visitors within that window
+ * share one DB read instead of one each — busted immediately on a confirmed
+ * payment or admin change via revalidateTag("board") (see payments.ts,
+ * admin-actions.ts). Tag: "board".
+ */
+const BOARD_CACHE_SECONDS = 5;
 
 export type BoardKind = "all" | "today" | "daily";
 
@@ -59,7 +70,7 @@ async function categoryFilter(slug?: string): Promise<string | undefined> {
 //  All-time board — ranked directly by Listing.totalCents
 // ---------------------------------------------------------------------------
 
-export async function getAllTimeBoard(params: {
+async function getAllTimeBoardUncached(params: {
   categorySlug?: string;
   page?: number;
   pageSize?: number;
@@ -125,6 +136,11 @@ export async function getAllTimeBoard(params: {
       leaderTotal > 0 ? leaderTotal + rules.takeTopIncrementCents : rules.startingBidCents,
   };
 }
+
+export const getAllTimeBoard = unstable_cache(getAllTimeBoardUncached, ["board-all"], {
+  revalidate: BOARD_CACHE_SECONDS,
+  tags: ["board"],
+});
 
 // ---------------------------------------------------------------------------
 //  Window boards (Today / Daily) — ranked by SUM(Bid.amountCents) in a window
@@ -216,7 +232,7 @@ async function getWindowBoard(params: {
   };
 }
 
-export async function getTodayBoard(params: {
+async function getTodayBoardUncached(params: {
   categorySlug?: string;
   page?: number;
   pageSize?: number;
@@ -226,7 +242,12 @@ export async function getTodayBoard(params: {
   return getWindowBoard({ board: "today", start, end, ...params });
 }
 
-export async function getDailyBoard(params: {
+export const getTodayBoard = unstable_cache(getTodayBoardUncached, ["board-today"], {
+  revalidate: BOARD_CACHE_SECONDS,
+  tags: ["board"],
+});
+
+async function getDailyBoardUncached(params: {
   dateKey?: string;
   categorySlug?: string;
   page?: number;
@@ -245,6 +266,11 @@ export async function getDailyBoard(params: {
     dateKey: key,
   });
 }
+
+export const getDailyBoard = unstable_cache(getDailyBoardUncached, ["board-daily"], {
+  revalidate: BOARD_CACHE_SECONDS,
+  tags: ["board"],
+});
 
 // ---------------------------------------------------------------------------
 //  Shared board entry point + helpers
@@ -268,7 +294,7 @@ export interface TopCategory {
   currency: string;
 }
 
-export async function getTopCategories(): Promise<TopCategory[]> {
+async function getTopCategoriesUncached(): Promise<TopCategory[]> {
   const settings = await getSettings();
   const categories = await prisma.category.findMany({
     where: { active: true },
@@ -302,10 +328,21 @@ export async function getTopCategories(): Promise<TopCategory[]> {
   });
 }
 
-export async function getActiveCategoriesForForm() {
+export const getTopCategories = unstable_cache(getTopCategoriesUncached, ["top-categories"], {
+  revalidate: 30,
+  tags: ["board", "categories"],
+});
+
+async function getActiveCategoriesForFormUncached() {
   return prisma.category.findMany({
     where: { active: true },
     orderBy: { sortOrder: "asc" },
     select: { name: true, slug: true, description: true },
   });
 }
+
+export const getActiveCategoriesForForm = unstable_cache(
+  getActiveCategoriesForFormUncached,
+  ["active-categories-form"],
+  { revalidate: 30, tags: ["categories"] },
+);

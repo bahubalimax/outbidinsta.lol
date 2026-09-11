@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ThemeScript } from "@/components/theme-toggle";
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { getActiveCategoriesForForm } from "@/lib/leaderboard";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 
@@ -78,6 +79,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SiteHeader categories={categories} />
         <main className="w-full flex-1">{children}</main>
         <SiteFooter />
+        <AnalyticsBeacon />
       </body>
     </html>
   );

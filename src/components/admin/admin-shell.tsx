@@ -6,6 +6,7 @@ import { cn } from "@/components/ui";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/bids", label: "Bids" },

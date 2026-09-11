@@ -201,6 +201,22 @@ model ActivityEvent {
   @@index([createdAt])
 }
 
+/// A single pageview, recorded by a small client-side beacon
+/// (src/components/analytics-beacon.tsx -> POST /api/track). Powers the
+/// built-in /admin/analytics dashboard — no third-party analytics needed.
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String? // hostname only, e.g. "google.com" — never the full URL (query strings may carry PII)
+  browser   String? // coarse UA parse: Chrome / Safari / Firefox / Edge / Other
+  device    String? // "mobile" | "desktop"
+  country   String? // ISO country code from the hosting platform's geo header, if present
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+}
+
 /// Single-row table (id = 1) holding configurable business rules.
 model Settings {
   id                    Int      @id @default(1)

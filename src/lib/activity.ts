@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma, ActivityType } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 
 type Tx = Prisma.TransactionClient;
@@ -36,9 +37,18 @@ export async function recordActivity(
   });
 }
 
-export async function getRecentActivity(limit = 25) {
+async function getRecentActivityUncached(limit: number) {
   return prisma.activityEvent.findMany({
     orderBy: { createdAt: "desc" },
     take: Math.min(Math.max(limit, 1), 100),
   });
+}
+
+const cachedRecentActivity = unstable_cache(getRecentActivityUncached, ["recent-activity"], {
+  revalidate: 5,
+  tags: ["board"],
+});
+
+export function getRecentActivity(limit = 25) {
+  return cachedRecentActivity(limit);
 }

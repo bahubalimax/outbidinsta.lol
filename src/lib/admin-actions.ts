@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { prisma, runSerializable } from "@/lib/db";
 import { recomputeListingTotal } from "@/lib/listings";
 import { invalidateSettingsCache, updateSettings, type AppSettings } from "@/lib/settings";
@@ -11,11 +12,16 @@ import type { categoryInputSchema, categoryUpdateSchema } from "@/lib/validation
 // ---- Categories ---------------------------------------------------------
 
 export async function createCategory(input: z.infer<typeof categoryInputSchema>) {
-  return prisma.category.create({ data: input });
+  const category = await prisma.category.create({ data: input });
+  revalidateTag("categories");
+  return category;
 }
 
 export async function updateCategory(id: string, input: z.infer<typeof categoryUpdateSchema>) {
-  return prisma.category.update({ where: { id }, data: input });
+  const category = await prisma.category.update({ where: { id }, data: input });
+  revalidateTag("categories");
+  revalidateTag("board");
+  return category;
 }
 
 export async function deleteCategory(id: string): Promise<{ deleted: boolean; reason?: string }> {
@@ -24,6 +30,7 @@ export async function deleteCategory(id: string): Promise<{ deleted: boolean; re
     return { deleted: false, reason: `Category has ${count} listing(s). Disable it instead.` };
   }
   await prisma.category.delete({ where: { id } });
+  revalidateTag("categories");
   return { deleted: true };
 }
 
@@ -31,6 +38,7 @@ export async function reorderCategories(order: string[]): Promise<void> {
   await prisma.$transaction(
     order.map((id, index) => prisma.category.update({ where: { id }, data: { sortOrder: index } })),
   );
+  revalidateTag("categories");
 }
 
 // ---- Settings ---------------------------------------------------------
@@ -41,6 +49,7 @@ export async function saveSettings(patch: Partial<AppSettings>): Promise<AppSett
   }
   const next = await updateSettings(patch);
   invalidateSettingsCache();
+  revalidateTag("board");
   log.info("admin.settings.updated", { ...patch });
   return next;
 }
@@ -71,6 +80,7 @@ export async function applyListingAction(id: string, action: ListingAction): Pro
         break;
     }
   });
+  revalidateTag("board");
   log.info("admin.listing.action", { id, action });
 }
 
@@ -78,6 +88,7 @@ export async function changeListingCategory(id: string, categoryId: string): Pro
   const category = await prisma.category.findUnique({ where: { id: categoryId } });
   if (!category) throw new Error("Category not found");
   await prisma.listing.update({ where: { id }, data: { categoryId } });
+  revalidateTag("board");
   log.info("admin.listing.category_changed", { id, categoryId });
 }
 
