@@ -70,6 +70,27 @@ function referrerHost(referrer: string | null | undefined): string | null {
 }
 
 /**
+ * Ad/social click-tracking params (fbclid, gclid, utm_*, ...) ride along on
+ * shared links and would otherwise get stored verbatim in `path` — bloating
+ * "top pages" with near-duplicate one-off rows and, worse, persisting a
+ * piece of the visitor's ad-click identifier. Strip only these; any other
+ * query param (e.g. ?category=fashion) is meaningful to us and stays.
+ */
+const TRACKING_PARAMS = [
+  "fbclid", "gclid", "gclsrc", "dclid", "msclkid", "twclid", "ttclid", "yclid",
+  "gbraid", "wbraid", "igshid", "mc_cid", "mc_eid",
+  "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
+];
+function stripTrackingParams(path: string): string {
+  const [pathname, query] = path.split("?");
+  if (!query) return path;
+  const params = new URLSearchParams(query);
+  for (const key of TRACKING_PARAMS) params.delete(key);
+  const rest = params.toString();
+  return rest ? `${pathname}?${rest}` : pathname;
+}
+
+/**
  * A daily-rotating, non-reversible fingerprint used only to approximate
  * unique visitors — never a persistent identifier. Salted with a server
  * secret + the current UTC date, so the same person hashes differently
@@ -87,7 +108,7 @@ export async function recordPageView(input: TrackInput): Promise<void> {
   const { browser, device } = parseUserAgent(input.userAgent);
   await prisma.pageView.create({
     data: {
-      path: input.path.slice(0, 300),
+      path: stripTrackingParams(input.path).slice(0, 300),
       referrer: referrerHost(input.referrer),
       browser,
       device,
@@ -95,6 +116,12 @@ export async function recordPageView(input: TrackInput): Promise<void> {
       visitorHash: hashVisitor(input.ip ?? "", input.userAgent),
     },
   });
+}
+
+export interface CountryVisitDetail {
+  country: string;
+  uniqueVisitors: number;
+  topPaths: { path: string; count: number }[];
 }
 
 export interface AnalyticsSummary {
@@ -107,6 +134,7 @@ export interface AnalyticsSummary {
   browsers: { browser: string; count: number }[];
   countries: { country: string; count: number }[];
   uniqueVisitorCountries: { country: string; count: number }[];
+  countryVisitDetails: CountryVisitDetail[];
   hourly: { hour: string; count: number }[];
 }
 
@@ -125,6 +153,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     recentRows,
     uniqueRows24h,
     uniqueRows7d,
+    countryPathRaw,
   ] = await Promise.all([
     prisma.pageView.count({ where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC } }),
     prisma.pageView.count({ where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC } }),
@@ -174,6 +203,14 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
       distinct: ["visitorHash"],
       select: { visitorHash: true, country: true },
     }),
+    // What people from each country are actually looking at — pageview
+    // counts per (country, path), reduced to a top-3-paths list per country
+    // in JS below (Prisma has no "top N per group" primitive).
+    prisma.pageView.groupBy({
+      by: ["country", "path"],
+      where: { createdAt: { gte: since7d }, country: { not: null }, ...REAL_TRAFFIC },
+      _count: { path: true },
+    }),
   ]);
 
   const uniqueVisitors24h = uniqueRows24h.length;
@@ -188,6 +225,21 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     .map(([country, count]) => ({ country, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
+
+  const pathsByCountry = new Map<string, { path: string; count: number }[]>();
+  for (const row of countryPathRaw) {
+    const country = row.country as string;
+    const list = pathsByCountry.get(country) ?? [];
+    list.push({ path: row.path, count: row._count.path });
+    pathsByCountry.set(country, list);
+  }
+  const countryVisitDetails: CountryVisitDetail[] = uniqueVisitorCountries.map((c) => ({
+    country: c.country,
+    uniqueVisitors: c.count,
+    topPaths: (pathsByCountry.get(c.country) ?? [])
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3),
+  }));
 
   const hourly: { hour: string; count: number }[] = [];
   const buckets = new Map<string, number>();
@@ -217,6 +269,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     browsers: browsersRaw.map((r) => ({ browser: r.browser ?? "Other", count: r._count.browser })),
     countries: countriesRaw.map((r) => ({ country: r.country ?? "Unknown", count: r._count.country })),
     uniqueVisitorCountries,
+    countryVisitDetails,
     hourly,
   };
 }

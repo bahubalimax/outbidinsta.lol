@@ -1,6 +1,16 @@
-import { getAnalyticsSummary } from "@/lib/analytics";
+import { getAnalyticsSummary, type CountryVisitDetail } from "@/lib/analytics";
 
 export const dynamic = "force-dynamic";
+
+/** "US" -> 🇺🇸 via regional indicator symbols — no flag asset/library needed. */
+function flagEmoji(code: string): string {
+  if (!/^[A-Z]{2}$/i.test(code)) return "🌐";
+  return code
+    .toUpperCase()
+    .split("")
+    .map((c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+    .join("");
+}
 
 export default async function AdminAnalytics() {
   const summary = await getAnalyticsSummary();
@@ -46,7 +56,9 @@ export default async function AdminAnalytics() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <VisitorHeatMap details={summary.countryVisitDetails} />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Table title="Top pages (7d)" rows={summary.topPages.map((p) => [p.path, p.count])} />
         <Table
           title="Top referrers (7d)"
@@ -58,12 +70,70 @@ export default async function AdminAnalytics() {
           rows={summary.countries.map((c) => [c.country, c.count])}
           emptyHint="Populated once traffic reaches the live domain (Vercel sends the visitor's country)."
         />
-        <Table
-          title="Unique visitors by country (7d)"
-          rows={summary.uniqueVisitorCountries.map((c) => [c.country, c.count])}
-          emptyHint="Populated once traffic reaches the live domain."
-        />
       </div>
+    </div>
+  );
+}
+
+/**
+ * A country-intensity "heat map" — no world-map SVG (hand-drawn geography is
+ * a maintenance trap and would need a third-party atlas, which cuts against
+ * the "no third-party script" rule this whole analytics setup is built on).
+ * Tile background opacity scales with that country's share of unique
+ * visitors, and each tile lists what those visitors were actually looking
+ * at, so "heat" and "areas visited" are both answered in one place.
+ */
+function VisitorHeatMap({ details }: { details: CountryVisitDetail[] }) {
+  const max = Math.max(1, ...details.map((d) => d.uniqueVisitors));
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold">Visitor heat map (7d)</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Unique visitors by country — tile intensity is that country&apos;s share of the total. Each
+        tile lists what pages those visitors actually viewed.
+      </p>
+      {details.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Populated once traffic reaches the live domain.
+        </p>
+      ) : (
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {details.map((d) => {
+            const intensity = d.uniqueVisitors / max;
+            return (
+              <div
+                key={d.country}
+                className="rounded-lg border border-border p-3"
+                style={{ backgroundColor: `color-mix(in srgb, var(--primary) ${Math.round(intensity * 45)}%, var(--card))` }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
+                    <span className="text-base">{flagEmoji(d.country)}</span>
+                    {d.country}
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums">{d.uniqueVisitors}</span>
+                </div>
+                <ul className="mt-2 space-y-0.5">
+                  {d.topPaths.length === 0 ? (
+                    <li className="text-xs text-muted-foreground">No page data</li>
+                  ) : (
+                    d.topPaths.map((p) => (
+                      <li
+                        key={p.path}
+                        className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                      >
+                        <span className="min-w-0 truncate">{p.path}</span>
+                        <span className="shrink-0 tabular-nums">{p.count}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
