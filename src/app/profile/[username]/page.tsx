@@ -95,13 +95,19 @@ export default async function ProfilePage({
             {view.categoryRank ? `#${view.categoryRank} in ${view.category.name}` : view.category.name}
             {" · "}
             <a
-              href={view.instagramUrl}
+              href={`/go/${view.listingId}`}
               target="_blank"
               rel="noopener noreferrer nofollow"
               className="inline-flex items-center gap-0.5 text-primary hover:underline"
             >
               View on Instagram <IconExternal className="size-3" />
             </a>
+            {view.clickCount > 0 && (
+              <span className="text-muted-foreground">
+                {" · "}
+                {view.clickCount.toLocaleString()} tracked click{view.clickCount === 1 ? "" : "s"}
+              </span>
+            )}
           </p>
           {view.status !== "ACTIVE" && (
             <div className="mt-2">

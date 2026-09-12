@@ -71,6 +71,7 @@ model Listing {
   currency     String        @default("USD")
   totalCents   Int           @default(0) // lifetime confirmed spend = all-time rank basis
   bidCount     Int           @default(0) // count of CONFIRMED payments
+  clickCount   Int           @default(0) // real, counted hits through /go/[id] — never estimated
   status       ListingStatus @default(PENDING)
   firstBidderId String?
   lastBidAt    DateTime?

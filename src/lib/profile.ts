@@ -24,6 +24,7 @@ export interface ProfileView {
   minNextTargetCents: number;
   minIncrementCents: number;
   bidCount: number;
+  clickCount: number;
   createdAt: string;
   lastBidAt: string | null;
   globalRank: number | null;
@@ -98,6 +99,7 @@ async function getProfileViewUncached(rawUsername: string): Promise<ProfileView 
     minNextTargetCents: minTargetTotalCents({ totalCents: listing.totalCents, biddable }, rules),
     minIncrementCents: settings.minIncrementCents,
     bidCount: listing.bidCount,
+    clickCount: listing.clickCount,
     createdAt: listing.createdAt.toISOString(),
     lastBidAt: listing.lastBidAt ? listing.lastBidAt.toISOString() : null,
     globalRank: rank.globalRank,
