@@ -81,6 +81,13 @@ export function AdminShell({
               {item.label}
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={logout}
+            className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium whitespace-nowrap text-muted-foreground"
+          >
+            Sign out
+          </button>
         </nav>
         {children}
       </div>

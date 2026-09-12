@@ -49,6 +49,10 @@ export function SiteHeader({
           </div>
         </div>
 
+        <div className="md:hidden">
+          <LiveVisitorPill activeNow={headerStats.activeNow} visitorsToday={headerStats.visitorsToday} />
+        </div>
+
         <Suspense
           fallback={<div className="h-9 w-full rounded-full bg-muted" aria-hidden />}
         >
