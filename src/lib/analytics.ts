@@ -357,3 +357,45 @@ export const getPublicCountryBreakdown = unstable_cache(
   { revalidate: 300 },
 );
 
+/**
+ * Records a bid submission rejected before createBidIntent wrote anything
+ * (bidding/listings paused, most commonly). Fire-and-forget — logging demand
+ * must never be why a user-facing error response gets delayed or fails.
+ */
+export async function recordBlockedBidAttempt(reason: string, username?: string | null): Promise<void> {
+  try {
+    await prisma.blockedBidAttempt.create({
+      data: { reason, username: username?.slice(0, 100) ?? null },
+    });
+  } catch {
+    // Never let attempt-logging break the real error response to the user.
+  }
+}
+
+export interface BlockedBidAttemptsSummary {
+  count24h: number;
+  count7d: number;
+  recent: { username: string | null; reason: string; createdAt: string }[];
+}
+
+export async function getBlockedBidAttemptsSummary(): Promise<BlockedBidAttemptsSummary> {
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [count24h, count7d, recentRows] = await Promise.all([
+    prisma.blockedBidAttempt.count({ where: { createdAt: { gte: since24h } } }),
+    prisma.blockedBidAttempt.count({ where: { createdAt: { gte: since7d } } }),
+    prisma.blockedBidAttempt.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: { username: true, reason: true, createdAt: true },
+    }),
+  ]);
+
+  return {
+    count24h,
+    count7d,
+    recent: recentRows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
+  };
+}
+

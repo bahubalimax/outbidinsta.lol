@@ -4,11 +4,15 @@ import { createBidIntent, BidError } from "@/lib/bids";
 import { assertSameOrigin, handleApiError, jsonError, jsonOk } from "@/lib/http";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { formatMoney } from "@/lib/money";
+import { recordBlockedBidAttempt } from "@/lib/analytics";
+
+const BLOCKED_REASONS = new Set(["BIDDING_DISABLED", "LISTINGS_DISABLED"]);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  let attemptedInstagram: string | undefined;
   try {
     assertSameOrigin(req);
 
@@ -20,6 +24,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => null);
     const parsed = createBidSchema.parse(body);
+    attemptedInstagram = parsed.instagram;
 
     const result = await createBidIntent({
       listingId: parsed.listingId,
@@ -41,6 +46,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     if (err instanceof BidError) {
+      if (BLOCKED_REASONS.has(err.code)) {
+        void recordBlockedBidAttempt(err.code, attemptedInstagram);
+      }
       return jsonError(err.httpStatus, err.message, err.code, {
         minTargetCents: err.minTargetCents,
         minTargetFormatted:

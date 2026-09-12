@@ -220,6 +220,20 @@ model PageView {
   @@index([visitorHash])
 }
 
+/// A real bid submission that got rejected before anything else was written —
+/// e.g. someone filled the claim form while biddingEnabled/listingsEnabled was
+/// false. createBidIntent throws before touching Listing/Bid/Payment in that
+/// case, so without this table that demand leaves no trace anywhere. No
+/// email, no IP — just the reason and the (public) handle they typed, if any.
+model BlockedBidAttempt {
+  id        String   @id @default(cuid())
+  reason    String // BidError.code, e.g. "BIDDING_DISABLED" | "LISTINGS_DISABLED"
+  username  String? // raw handle they typed, if the request got that far — never normalized/validated
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 /// Single-row table (id = 1) holding configurable business rules.
 model Settings {
   id                    Int      @id @default(1)

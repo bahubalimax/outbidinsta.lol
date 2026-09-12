@@ -1,4 +1,5 @@
-import { getAnalyticsSummary, type CountryVisitDetail } from "@/lib/analytics";
+import { getAnalyticsSummary, getBlockedBidAttemptsSummary, type CountryVisitDetail } from "@/lib/analytics";
+import { timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,10 @@ function flagEmoji(code: string): string {
 }
 
 export default async function AdminAnalytics() {
-  const summary = await getAnalyticsSummary();
+  const [summary, blockedAttempts] = await Promise.all([
+    getAnalyticsSummary(),
+    getBlockedBidAttemptsSummary(),
+  ]);
   const maxHourly = Math.max(1, ...summary.hourly.map((h) => h.count));
 
   return (
@@ -55,6 +59,8 @@ export default async function AdminAnalytics() {
           <span>now</span>
         </div>
       </div>
+
+      <BlockedBidAttempts summary={blockedAttempts} />
 
       <VisitorHeatMap details={summary.countryVisitDetails} />
 
@@ -133,6 +139,52 @@ function VisitorHeatMap({ details }: { details: CountryVisitDetail[] }) {
             );
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+const BLOCKED_REASON_LABEL: Record<string, string> = {
+  BIDDING_DISABLED: "Bidding paused",
+  LISTINGS_DISABLED: "New listings paused",
+};
+
+/**
+ * Real demand that never got the chance to become a Bid row: someone filled
+ * the claim form and hit submit while biddingEnabled/listingsEnabled was
+ * false. createBidIntent rejects before writing anything in that case, so
+ * without this table that attempt would leave zero trace in the database —
+ * this is the only place that answers "did anyone actually try."
+ */
+function BlockedBidAttempts({
+  summary,
+}: {
+  summary: { count24h: number; count7d: number; recent: { username: string | null; reason: string; createdAt: string }[] };
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold">Blocked bid attempts</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Real submissions rejected because bidding or new listings were paused — the only record of
+        demand that never became a Bid row.
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:w-64">
+        <Card label="Blocked · 24h" value={summary.count24h} />
+        <Card label="Blocked · 7d" value={summary.count7d} />
+      </div>
+      {summary.recent.length > 0 && (
+        <ul className="mt-4 divide-y divide-border text-sm">
+          {summary.recent.map((a, i) => (
+            <li key={i} className="flex items-center justify-between gap-2 py-1.5">
+              <span className="min-w-0 truncate">
+                {a.username ? `@${a.username}` : <span className="text-muted-foreground">no handle entered</span>}
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {BLOCKED_REASON_LABEL[a.reason] ?? a.reason} · {timeAgo(a.createdAt)}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
