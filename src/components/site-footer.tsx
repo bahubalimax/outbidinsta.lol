@@ -1,13 +1,23 @@
 import Link from "next/link";
 import { AFFILIATION_DISCLAIMER, FOOTER_NAV, SITE_NAME, SOCIAL_LINKS } from "@/lib/site";
 import { IconX, IconInstagram } from "@/components/icons";
+import { getSettings } from "@/lib/settings";
+import { formatMoney } from "@/lib/money";
 
 const SOCIAL_ICONS = { x: IconX, instagram: IconInstagram };
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const settings = await getSettings();
   return (
     <footer className="mt-16 pb-10 text-center">
-      <nav aria-label="Footer" className="text-sm text-muted-foreground">
+      <p className="mx-auto max-w-xl px-4 text-xs leading-normal text-muted-foreground text-balance">
+        <span className="font-semibold text-foreground">OUTBID INSTAGRAM.</span> All-time board.
+        Ranked by lifetime spend on the listing. This board never resets. New listings from{" "}
+        {formatMoney(settings.startingBidCents, settings.currency)}; taking #1 costs{" "}
+        {formatMoney(settings.takeTopIncrementCents, settings.currency)} over the leader.{" "}
+        Nobody&apos;s rank is safe — you can always be outbid back.
+      </p>
+      <nav aria-label="Footer" className="mt-5 text-sm text-muted-foreground">
         {FOOTER_NAV.map((item, i) => (
           <span key={item.href}>
             {i > 0 && " · "}

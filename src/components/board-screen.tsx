@@ -13,7 +13,6 @@ import { DailyResetCountdown } from "@/components/daily-reset-countdown";
 import { getHeaderStats } from "@/lib/analytics";
 import { getRecentActivity } from "@/lib/activity";
 import { recentDayKeys, utcDateKey } from "@/lib/date-windows";
-import { timeAgo } from "@/lib/format";
 import { ClaimForm } from "@/components/claim-form";
 import { BoardTabs } from "@/components/board-tabs";
 import { Pagination } from "@/components/pagination";
@@ -30,21 +29,6 @@ import { formatMoney } from "@/lib/money";
 import { AFFILIATION_DISCLAIMER } from "@/lib/site";
 import { cn } from "@/components/ui";
 
-const BOARD_COPY: Record<BoardKind, { label: string; blurb: string }> = {
-  all: {
-    label: "All-time",
-    blurb: "Ranked by lifetime spend on the listing. This board never resets.",
-  },
-  today: {
-    label: "Today",
-    blurb: "A rolling 24 hours. Each payment counts from when it clears, then drops off a day later.",
-  },
-  daily: {
-    label: "Daily",
-    blurb: "A single UTC calendar day. The current day stays live; past days freeze as an archive.",
-  },
-};
-
 export async function BoardScreen({
   board,
   page = 1,
@@ -60,7 +44,7 @@ export async function BoardScreen({
   const settings = await getSettings();
   const isPage1 = page === 1 && !categorySlug;
 
-  const [result, formCategories, activity, today, top10, headerStats] = await Promise.all([
+  const [result, formCategories, activity, today, top10] = await Promise.all([
     getBoard(board, { categorySlug, page, pageSize, dateKey }),
     getActiveCategoriesForForm(),
     getRecentActivity(5),
@@ -68,7 +52,6 @@ export async function BoardScreen({
     // Quick-glance all-time reference panel next to the claim form —
     // independent of whichever board this page itself is showing.
     isPage1 ? getAllTimeBoard({ pageSize: 10 }) : Promise.resolve(null),
-    getHeaderStats(),
   ]);
 
   const activityItems: ActivityItem[] = activity.map((e) => ({
@@ -102,12 +85,10 @@ export async function BoardScreen({
     return `${base}${qs ? `?${qs}` : ""}`;
   };
 
-  const activeCategory = formCategories.find((c) => c.slug === categorySlug);
   const dayKeys = board === "daily" ? recentDayKeys(8) : [];
 
   const showSidebar = isPage1 && !!top10 && top10.rows.length > 0;
   const isCurrentDailyDay = board === "daily" && (!dateKey || dateKey === utcDateKey());
-  const latestActivity = activityItems[0];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-3 pb-16 md:gap-8 md:pt-4">
@@ -116,31 +97,6 @@ export async function BoardScreen({
           <BoardTabs active={board} showDaily={settings.dailyBoardEnabled} />
 
           {isCurrentDailyDay && <DailyResetCountdown />}
-
-          {isPage1 && (
-            <div className="mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="relative inline-flex size-2">
-                  <span className="obi-ping absolute inline-flex size-full rounded-full bg-live/50" />
-                  <span className="relative inline-flex size-2 rounded-full bg-live" />
-                </span>
-                <span className="tabular-nums">
-                  <span className="font-semibold text-foreground">{headerStats.activeNow}</span> online
-                  now
-                </span>
-              </span>
-              {latestActivity && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>
-                    <span className="font-semibold text-foreground">@{latestActivity.username}</span>{" "}
-                    {latestActivity.rank ? `just claimed #${latestActivity.rank}` : "just joined the board"}{" "}
-                    · {timeAgo(latestActivity.createdAt)}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
 
           {isPage1 && (
             <ClaimForm
@@ -153,15 +109,6 @@ export async function BoardScreen({
               todayVariant={isCurrentDailyDay}
             />
           )}
-
-          <p className="mx-auto max-w-xl text-center text-xs leading-normal text-muted-foreground text-balance">
-            <span className="font-semibold text-foreground">OUTBID INSTAGRAM.</span>{" "}
-            {activeCategory ? `${activeCategory.name} — ${BOARD_COPY[board].label}. ` : `${BOARD_COPY[board].label} board. `}
-            {BOARD_COPY[board].blurb} New listings from{" "}
-            {formatMoney(settings.startingBidCents, settings.currency)}; taking #1 costs{" "}
-            {formatMoney(settings.takeTopIncrementCents, settings.currency)} over the leader.
-            {" "}Nobody&apos;s rank is safe — you can always be outbid back.
-          </p>
 
           {board === "daily" && (
             <div className="obi-scroll-x -mx-4 flex justify-center gap-1.5 overflow-x-auto px-4">
