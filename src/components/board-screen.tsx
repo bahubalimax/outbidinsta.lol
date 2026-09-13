@@ -222,7 +222,11 @@ async function ProjectStats({ currency }: { currency: string }) {
   const [headerStats, revenueAgg, totalListings] = await Promise.all([
     getHeaderStats(),
     prisma.payment.aggregate({ _sum: { amountCents: true }, where: { status: "paid" } }),
-    prisma.listing.count(),
+    // Only listings that have actually received a confirmed payment —
+    // PENDING (never paid) and REMOVED (admin fraud/policy takedown) aren't
+    // real claimed profiles, so they don't belong in a "no fabricated
+    // numbers" count.
+    prisma.listing.count({ where: { status: { in: ["ACTIVE", "DISABLED"] } } }),
   ]);
   return (
     <section className="mt-6 flex flex-col items-center gap-3">

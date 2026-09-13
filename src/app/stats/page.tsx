@@ -30,7 +30,10 @@ export default async function StatsPage() {
       getHeaderStats(),
       prisma.payment.aggregate({ _sum: { amountCents: true }, where: { status: "paid" } }),
       prisma.listing.count({ where: { status: "ACTIVE" } }),
-      prisma.listing.count(),
+      // Only listings that actually received a confirmed payment — PENDING
+      // (never paid) and REMOVED (admin fraud/policy takedown) aren't real
+      // claimed profiles.
+      prisma.listing.count({ where: { status: { in: ["ACTIVE", "DISABLED"] } } }),
       getPublicCountryBreakdown(),
     ]);
 
