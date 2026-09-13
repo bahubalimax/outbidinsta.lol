@@ -322,6 +322,23 @@ export function ClaimForm({
           </button>
         </div>
 
+        {handle.trim().length > 0 && (
+          <div className="mx-auto flex w-[92%] items-center justify-center gap-2.5 md:w-full">
+            <span className="brand-gradient-bg grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold text-white">
+              {(lookup.username ?? handle.replace(/^@/, ""))
+                .replace(/[^a-z0-9]/gi, "")
+                .slice(0, 1)
+                .toUpperCase() || "?"}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                @{(lookup.username ?? handle.replace(/^@/, "")).toLowerCase()}
+              </span>{" "}
+              → <span className="brand-gradient-text font-semibold">Top Bidder</span> ticket, once
+              confirmed
+            </span>
+          </div>
+        )}
         {helper && (
           <p
             className={cn(
