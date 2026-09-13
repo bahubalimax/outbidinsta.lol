@@ -41,14 +41,14 @@ export const SOCIAL_LINKS: { href: string; label: string; icon: "x" | "instagram
  * launch. Flip TEST_MODE_BANNER_ENABLED to false (or delete
  * <TestModeTicker/> from layout.tsx) once the site is open.
  */
-export const TEST_MODE_BANNER_ENABLED = true;
+export const TEST_MODE_BANNER_ENABLED = false;
 
 /**
  * Full-screen "launching soon" popup, shown briefly on load while the claim
  * form stays visible/interactive-looking behind it. Flip to false (or
  * delete <LaunchingSoonPopup/> from layout.tsx) once listings reopen.
  */
-export const LAUNCHING_SOON_POPUP_ENABLED = true;
+export const LAUNCHING_SOON_POPUP_ENABLED = false;
 
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
