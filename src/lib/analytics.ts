@@ -129,6 +129,8 @@ export interface AnalyticsSummary {
   pageviews7d: number;
   uniqueVisitors24h: number;
   uniqueVisitors7d: number;
+  checkoutPageUniqueVisitors24h: number;
+  checkoutPageUniqueVisitors7d: number;
   topPages: { path: string; count: number }[];
   topReferrers: { referrer: string; count: number }[];
   browsers: { browser: string; count: number }[];
@@ -154,6 +156,8 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     uniqueRows24h,
     uniqueRows7d,
     countryPathRaw,
+    checkoutUniqueRows24h,
+    checkoutUniqueRows7d,
   ] = await Promise.all([
     prisma.pageView.count({ where: { createdAt: { gte: since24h }, ...REAL_TRAFFIC } }),
     prisma.pageView.count({ where: { createdAt: { gte: since7d }, ...REAL_TRAFFIC } }),
@@ -211,10 +215,34 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
       where: { createdAt: { gte: since7d }, country: { not: null }, ...REAL_TRAFFIC },
       _count: { path: true },
     }),
+    // Unique visitors to the checkout/payment return page — the path always
+    // carries a distinct ?bid= query, so match by prefix rather than equality.
+    prisma.pageView.findMany({
+      where: {
+        createdAt: { gte: since24h },
+        path: { startsWith: "/checkout/return" },
+        visitorHash: { not: null },
+        ...REAL_TRAFFIC,
+      },
+      distinct: ["visitorHash"],
+      select: { visitorHash: true },
+    }),
+    prisma.pageView.findMany({
+      where: {
+        createdAt: { gte: since7d },
+        path: { startsWith: "/checkout/return" },
+        visitorHash: { not: null },
+        ...REAL_TRAFFIC,
+      },
+      distinct: ["visitorHash"],
+      select: { visitorHash: true },
+    }),
   ]);
 
   const uniqueVisitors24h = uniqueRows24h.length;
   const uniqueVisitors7d = uniqueRows7d.length;
+  const checkoutPageUniqueVisitors24h = checkoutUniqueRows24h.length;
+  const checkoutPageUniqueVisitors7d = checkoutUniqueRows7d.length;
 
   const countryCounts = new Map<string, number>();
   for (const row of uniqueRows7d) {
@@ -261,6 +289,8 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     pageviews7d,
     uniqueVisitors24h,
     uniqueVisitors7d,
+    checkoutPageUniqueVisitors24h,
+    checkoutPageUniqueVisitors7d,
     topPages: topPagesRaw.map((r) => ({ path: r.path, count: r._count.path })),
     topReferrers: topReferrersRaw.map((r) => ({
       referrer: r.referrer ?? "direct",

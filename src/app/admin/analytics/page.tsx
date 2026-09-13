@@ -37,7 +37,15 @@ export default async function AdminAnalytics() {
         <Card label="Pageviews · 7d" value={summary.pageviews7d} />
         <Card label="Unique visitors · 24h" value={summary.uniqueVisitors24h} />
         <Card label="Unique visitors · 7d" value={summary.uniqueVisitors7d} />
+        <Card label="Checkout page visits · 24h" value={summary.checkoutPageUniqueVisitors24h} />
+        <Card label="Checkout page visits · 7d" value={summary.checkoutPageUniqueVisitors7d} />
       </div>
+      <p className="-mt-3 text-xs text-muted-foreground">
+        &ldquo;Checkout page visits&rdquo; counts unique visitors to our own{" "}
+        <code>/checkout/return</code> page — the screen people land on after paying. Dodo&apos;s
+        actual hosted checkout page is on their domain, so we can&apos;t see visits there directly;
+        this is the closest real signal we have.
+      </p>
 
       <div className="rounded-xl border border-border bg-card p-4">
         <h2 className="mb-3 text-sm font-semibold">Last 24 hours</h2>
