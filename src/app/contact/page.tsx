@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@outbidinsta.lol";
-const INSTAGRAM_URL = "https://instagram.com/outbidinsta.lol";
+const INSTAGRAM_URL = "https://instagram.com/outbidinsta";
 
 export default async function ContactPage() {
   const qrSvg = await QRCode.toString(INSTAGRAM_URL, {
@@ -26,7 +26,7 @@ export default async function ContactPage() {
         For support, refund reviews, listing removal requests, category changes, or press: email{" "}
         <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> or DM{" "}
         <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
-          @outbidinsta.lol
+          @outbidinsta
         </a>{" "}
         on Instagram.
       </p>
@@ -48,7 +48,7 @@ export default async function ContactPage() {
           dangerouslySetInnerHTML={{ __html: qrSvg }}
         />
         <div>
-          <p className="text-sm font-semibold text-foreground">Scan to follow @outbidinsta.lol</p>
+          <p className="text-sm font-semibold text-foreground">Scan to follow @outbidinsta</p>
           <p className="mt-0.5 text-xs text-muted-foreground">Or DM us there anytime</p>
         </div>
       </div>

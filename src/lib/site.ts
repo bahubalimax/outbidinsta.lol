@@ -33,7 +33,7 @@ export const FOOTER_NAV = [
 
 export const SOCIAL_LINKS: { href: string; label: string; icon: "x" | "instagram" }[] = [
   { href: "https://x.com/outbidinsta", label: "X (Twitter)", icon: "x" },
-  { href: "https://instagram.com/outbidinsta.lol", label: "Instagram", icon: "instagram" },
+  { href: "https://instagram.com/outbidinsta", label: "Instagram", icon: "instagram" },
 ];
 
 /**
