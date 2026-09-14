@@ -50,8 +50,8 @@ export async function BoardScreen({
     getRecentActivity(5),
     board === "all" ? getTodayBoard({ pageSize: 3 }) : Promise.resolve(null),
     // Quick-glance all-time reference panel next to the claim form —
-    // independent of whichever board this page itself is showing.
-    isPage1 ? getAllTimeBoard({ pageSize: 10 }) : Promise.resolve(null),
+    // homepage only, not the Today/Daily boards.
+    board === "all" && isPage1 ? getAllTimeBoard({ pageSize: 10 }) : Promise.resolve(null),
   ]);
 
   const activityItems: ActivityItem[] = activity.map((e) => ({
@@ -87,7 +87,7 @@ export async function BoardScreen({
 
   const dayKeys = board === "daily" ? recentDayKeys(8) : [];
 
-  const showSidebar = isPage1 && !!top10 && top10.rows.length > 0;
+  const showSidebar = homeLike && isPage1 && !!top10 && top10.rows.length > 0;
   const isCurrentDailyDay = board === "daily" && (!dateKey || dateKey === utcDateKey());
 
   return (
@@ -167,7 +167,7 @@ export async function BoardScreen({
           </div>
         </div>
 
-        {showSidebar && <TopSidebar rows={top10!.rows} className="mt-6 lg:mt-[267px]" />}
+        {showSidebar && <TopSidebar rows={top10!.rows} className="mt-6 lg:mt-16" />}
       </div>
 
       {board === "all" && isPage1 && (
